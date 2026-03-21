@@ -230,7 +230,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, reactive } from 'vue'
-import StorageUtil from '@/storageUtil'
+import StorageUtil from '@/utils/storageUtil'
 import {
   Check, Bookmark, ShieldCheck, Zap,
   Loader2, Sparkles, Trash2, LayoutGrid, Globe, Clock,
