@@ -4,14 +4,18 @@ use tokio::sync::Semaphore;
 mod commands;
 mod models;
 mod services;
+mod ai_supplier;
 
-struct AppConfig {
-    permit: Arc<Semaphore>,
+#[derive(Clone)]
+pub struct AppConfig {
+    pub permit: Arc<Semaphore>,
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_shell::init())
         .manage(AppConfig {
             permit: Arc::new(Semaphore::new(3)),
@@ -20,11 +24,13 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             commands::get_bookmark_folders,
             commands::get_bookmarks_by_folder,
-            commands::smart_classify_v3,
             commands::get_ai_models,
             commands::check_browsers,
             commands::backup_bookmarks,
+            commands::check_backup,
             commands::get_bookmarks_num,
+            commands::get_all_bookmarks,
+            commands::organize_bookmarks,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -1,145 +1,525 @@
-{
-    "web_collect_main_categories": [
-    {
-      "category_id": 1,
-      "category_name": "工作/职场",
-      "sub_categories": [
-        {"sub_id": 101, "sub_name": "项目资料"},
-        {"sub_id": 102, "sub_name": "行业报告"},
-        {"sub_id": 103, "sub_name": "竞品分析"},
-        {"sub_id": 104, "sub_name": "会议纪要"},
-        {"sub_id": 105, "sub_name": "办公技巧"},
-        {"sub_id": 106, "sub_name": "简历/面试"},
-        {"sub_id": 107, "sub_name": "职场进阶"}
-      ]
-    },
-    {
-      "category_id": 2,
-      "category_name": "学习/教育",
-      "sub_categories": [
-        {"sub_id": 201, "sub_name": "考试资料"},
-        {"sub_id": 202, "sub_name": "学科知识"},
-        {"sub_id": 203, "sub_name": "编程学习"},
-        {"sub_id": 204, "sub_name": "语言学习"},
-        {"sub_id": 205, "sub_name": "公开课/网课"},
-        {"sub_id": 206, "sub_name": "电子书/文献"}
-      ]
-    },
-    {
-      "category_id": 3,
-      "category_name": "生活/日常",
-      "sub_categories": [
-        {"sub_id": 301, "sub_name": "美食菜谱"},
-        {"sub_id": 302, "sub_name": "旅行攻略"},
-        {"sub_id": 303, "sub_name": "家居装修"},
-        {"sub_id": 304, "sub_name": "健康养生"},
-        {"sub_id": 305, "sub_name": "穿搭美妆"},
-        {"sub_id": 306, "sub_name": "亲子育儿"},
-        {"sub_id": 307, "sub_name": "理财记账"},
-        {"sub_id": 308, "sub_name": "便民服务"}
-      ]
-    },
-    {
-      "category_id": 4,
-      "category_name": "娱乐/休闲",
-      "sub_categories": [
-        {"sub_id": 401, "sub_name": "影视综艺"},
-        {"sub_id": 402, "sub_name": "音乐歌单"},
-        {"sub_id": 403, "sub_name": "游戏攻略"},
-        {"sub_id": 404, "sub_name": "小说漫画"},
-        {"sub_id": 405, "sub_name": "趣味段子"},
-        {"sub_id": 406, "sub_name": "摄影/设计灵感"}
-      ]
-    },
-    {
-      "category_id": 5,
-      "category_name": "兴趣/爱好",
-      "sub_categories": [
-        {"sub_id": 501, "sub_name": "运动健身"},
-        {"sub_id": 502, "sub_name": "手工DIY"},
-        {"sub_id": 503, "sub_name": "收藏"},
-        {"sub_id": 504, "sub_name": "园艺"},
-        {"sub_id": 505, "sub_name": "书法绘画"},
-        {"sub_id": 506, "sub_name": "宠物养护"}
-      ]
-    },
-    {
-      "category_id": 6,
-      "category_name": "工具/资源",
-      "sub_categories": [
-        {"sub_id": 601, "sub_name": "在线工具"},
-        {"sub_id": 602, "sub_name": "软件下载"},
-        {"sub_id": 603, "sub_name": "模板素材"},
-        {"sub_id": 604, "sub_name": "网盘资源"},
-        {"sub_id": 605, "sub_name": "实用网站合集"}
-      ]
-    },
-    {
-      "category_id": 7,
-      "category_name": "灵感/创意",
-      "sub_categories": [
-        {"sub_id": 701, "sub_name": "设计参考"},
-        {"sub_id": 702, "sub_name": "文案素材"},
-        {"sub_id": 703, "sub_name": "创意案例"},
-        {"sub_id": 704, "sub_name": "创业想法"},
-        {"sub_id": 705, "sub_name": "短视频脚本"}
-      ]
-    },
-    {
-      "category_id": 8,
-      "category_name": "互联网/科技",
-      "sub_categories": [
-        {"sub_id": 801, "sub_name": "前端开发"},
-        {"sub_id": 802, "sub_name": "后端开发"},
-        {"sub_id": 803, "sub_name": "产品经理"},
-        {"sub_id": 804, "sub_name": "运营"},
-        {"sub_id": 805, "sub_name": "测试"},
-        {"sub_id": 806, "sub_name": "人工智能"},
-        {"sub_id": 807, "sub_name": "大数据"}
-      ]
-    },
-    {
-      "category_id": 9,
-      "category_name": "设计/创意",
-      "sub_categories": [
-        {"sub_id": 901, "sub_name": "UI/UX设计"},
-        {"sub_id": 902, "sub_name": "平面设计"},
-        {"sub_id": 903, "sub_name": "插画"},
-        {"sub_id": 904, "sub_name": "3D建模"},
-        {"sub_id": 905, "sub_name": "视频剪辑"}
-      ]
-    },
-    {
-      "category_id": 10,
-      "category_name": "金融/财经",
-      "sub_categories": [
-        {"sub_id": 1001, "sub_name": "股票"},
-        {"sub_id": 1002, "sub_name": "基金"},
-        {"sub_id": 1003, "sub_name": "理财"},
-        {"sub_id": 1004, "sub_name": "保险"},
-        {"sub_id": 1005, "sub_name": "宏观经济"}
-      ]
-    },
-    {
-      "category_id": 11,
-      "category_name": "医疗/健康",
-      "sub_categories": [
-        {"sub_id": 1101, "sub_name": "中医"},
-        {"sub_id": 1102, "sub_name": "西医"},
-        {"sub_id": 1103, "sub_name": "养生"},
-        {"sub_id": 1104, "sub_name": "慢病管理"},
-        {"sub_id": 1105, "sub_name": "运动康复"}
-      ]
-    },
-    {
-      "category_id": 12,
-      "category_name": "教育/培训",
-      "sub_categories": [
-        {"sub_id": 1201, "sub_name": "K12教育"},
-        {"sub_id": 1202, "sub_name": "职业教育"},
-        {"sub_id": 1203, "sub_name": "成人教育"},
-        {"sub_id": 1204, "sub_name": "在线教育"}
-      ]
-    }
-  ]
-}
+[
+  {
+    "id": 1,
+    "name": "书签栏",
+    "type": "folder",
+    "children": [
+      {
+        "id": 101,
+        "name": "工作/职场",
+        "type": "folder",
+        "children": [
+          {
+            "id": 1001,
+            "name": "项目资料",
+            "type": "folder",
+            "children": []
+          },
+          {
+            "id": 1002,
+            "name": "行业报告",
+            "type": "folder",
+            "children": []
+          },
+          {
+            "id": 1003,
+            "name": "竞品分析",
+            "type": "folder",
+            "children": []
+          },
+          {
+            "id": 1004,
+            "name": "会议纪要",
+            "type": "folder",
+            "children": []
+          },
+          {
+            "id": 1005,
+            "name": "办公技巧",
+            "type": "folder",
+            "children": []
+          },
+          {
+            "id": 1006,
+            "name": "简历/面试",
+            "type": "folder",
+            "children": []
+          },
+          {
+            "id": 1007,
+            "name": "职场进阶",
+            "type": "folder",
+            "children": []
+          }
+        ]
+      },
+      {
+        "id": 102,
+        "name": "学习/教育",
+        "type": "folder",
+        "children": [
+          {
+            "id": 2001,
+            "name": "考试资料",
+            "type": "folder",
+            "children": []
+          },
+          {
+            "id": 2002,
+            "name": "学科知识",
+            "type": "folder",
+            "children": []
+          },
+          {
+            "id": 2003,
+            "name": "编程学习",
+            "type": "folder",
+            "children": []
+          },
+          {
+            "id": 2004,
+            "name": "语言学习",
+            "type": "folder",
+            "children": []
+          },
+          {
+            "id": 2005,
+            "name": "公开课/网课",
+            "type": "folder",
+            "children": []
+          },
+          {
+            "id": 2006,
+            "name": "电子书/文献",
+            "type": "folder",
+            "children": []
+          }
+        ]
+      },
+      {
+        "id": 103,
+        "name": "生活/日常",
+        "type": "folder",
+        "children": [
+          {
+            "id": 3001,
+            "name": "美食菜谱",
+            "type": "folder",
+            "children": []
+          },
+          {
+            "id": 3002,
+            "name": "旅行攻略",
+            "type": "folder",
+            "children": []
+          },
+          {
+            "id": 3003,
+            "name": "家居装修",
+            "type": "folder",
+            "children": []
+          },
+          {
+            "id": 3004,
+            "name": "健康养生",
+            "type": "folder",
+            "children": []
+          },
+          {
+            "id": 3005,
+            "name": "穿搭美妆",
+            "type": "folder",
+            "children": []
+          },
+          {
+            "id": 3006,
+            "name": "亲子育儿",
+            "type": "folder",
+            "children": []
+          },
+          {
+            "id": 3007,
+            "name": "理财记账",
+            "type": "folder",
+            "children": []
+          },
+          {
+            "id": 3008,
+            "name": "便民服务",
+            "type": "folder",
+            "children": []
+          }
+        ]
+      },
+      {
+        "id": 104,
+        "name": "娱乐/休闲",
+        "type": "folder",
+        "children": [
+          {
+            "id": 4001,
+            "name": "影视综艺",
+            "type": "folder",
+            "children": []
+          },
+          {
+            "id": 4002,
+            "name": "音乐歌单",
+            "type": "folder",
+            "children": []
+          },
+          {
+            "id": 4003,
+            "name": "游戏攻略",
+            "type": "folder",
+            "children": []
+          },
+          {
+            "id": 4004,
+            "name": "小说漫画",
+            "type": "folder",
+            "children": []
+          },
+          {
+            "id": 4005,
+            "name": "趣味段子",
+            "type": "folder",
+            "children": []
+          },
+          {
+            "id": 4006,
+            "name": "摄影/设计灵感",
+            "type": "folder",
+            "children": []
+          }
+        ]
+      },
+      {
+        "id": 105,
+        "name": "兴趣/爱好",
+        "type": "folder",
+        "children": [
+          {
+            "id": 5001,
+            "name": "运动健身",
+            "type": "folder",
+            "children": []
+          },
+          {
+            "id": 5002,
+            "name": "手工DIY",
+            "type": "folder",
+            "children": []
+          },
+          {
+            "id": 5003,
+            "name": "收藏",
+            "type": "folder",
+            "children": []
+          },
+          {
+            "id": 5004,
+            "name": "园艺",
+            "type": "folder",
+            "children": []
+          },
+          {
+            "id": 5005,
+            "name": "书法绘画",
+            "type": "folder",
+            "children": []
+          },
+          {
+            "id": 5006,
+            "name": "宠物养护",
+            "type": "folder",
+            "children": []
+          }
+        ]
+      },
+      {
+        "id": 106,
+        "name": "工具/资源",
+        "type": "folder",
+        "children": [
+          {
+            "id": 6001,
+            "name": "在线工具",
+            "type": "folder",
+            "children": []
+          },
+          {
+            "id": 6002,
+            "name": "软件下载",
+            "type": "folder",
+            "children": []
+          },
+          {
+            "id": 6003,
+            "name": "模板素材",
+            "type": "folder",
+            "children": []
+          },
+          {
+            "id": 6004,
+            "name": "网盘资源",
+            "type": "folder",
+            "children": []
+          },
+          {
+            "id": 6005,
+            "name": "实用网站",
+            "type": "folder",
+            "children": []
+          }
+        ]
+      },
+      {
+        "id": 107,
+        "name": "灵感/创意",
+        "type": "folder",
+        "children": [
+          {
+            "id": 7001,
+            "name": "设计参考",
+            "type": "folder",
+            "children": []
+          },
+          {
+            "id": 7002,
+            "name": "文案素材",
+            "type": "folder",
+            "children": []
+          },
+          {
+            "id": 7003,
+            "name": "创意案例",
+            "type": "folder",
+            "children": []
+          },
+          {
+            "id": 7004,
+            "name": "创业想法",
+            "type": "folder",
+            "children": []
+          },
+          {
+            "id": 7005,
+            "name": "短视频脚本",
+            "type": "folder",
+            "children": []
+          }
+        ]
+      },
+      {
+        "id": 108,
+        "name": "互联网/科技",
+        "type": "folder",
+        "children": [
+          {
+            "id": 8001,
+            "name": "前端开发",
+            "type": "folder",
+            "children": []
+          },
+          {
+            "id": 8002,
+            "name": "后端开发",
+            "type": "folder",
+            "children": []
+          },
+          {
+            "id": 8003,
+            "name": "产品经理",
+            "type": "folder",
+            "children": []
+          },
+          {
+            "id": 8004,
+            "name": "运营",
+            "type": "folder",
+            "children": []
+          },
+          {
+            "id": 8005,
+            "name": "测试",
+            "type": "folder",
+            "children": []
+          },
+          {
+            "id": 8006,
+            "name": "人工智能",
+            "type": "folder",
+            "children": []
+          },
+          {
+            "id": 8007,
+            "name": "大数据",
+            "type": "folder",
+            "children": []
+          }
+        ]
+      },
+      {
+        "id": 109,
+        "name": "设计/创意",
+        "type": "folder",
+        "children": [
+          {
+            "id": 9001,
+            "name": "UI/UX设计",
+            "type": "folder",
+            "children": []
+          },
+          {
+            "id": 9002,
+            "name": "平面设计",
+            "type": "folder",
+            "children": []
+          },
+          {
+            "id": 9003,
+            "name": "插画",
+            "type": "folder",
+            "children": []
+          },
+          {
+            "id": 9004,
+            "name": "3D建模",
+            "type": "folder",
+            "children": []
+          },
+          {
+            "id": 9005,
+            "name": "视频剪辑",
+            "type": "folder",
+            "children": []
+          }
+        ]
+      },
+      {
+        "id": 110,
+        "name": "金融/财经",
+        "type": "folder",
+        "children": [
+          {
+            "id": 10001,
+            "name": "股票",
+            "type": "folder",
+            "children": []
+          },
+          {
+            "id": 10002,
+            "name": "基金",
+            "type": "folder",
+            "children": []
+          },
+          {
+            "id": 10003,
+            "name": "理财",
+            "type": "folder",
+            "children": []
+          },
+          {
+            "id": 10004,
+            "name": "保险",
+            "type": "folder",
+            "children": []
+          },
+          {
+            "id": 10005,
+            "name": "宏观经济",
+            "type": "folder",
+            "children": []
+          }
+        ]
+      },
+      {
+        "id": 111,
+        "name": "医疗/健康",
+        "type": "folder",
+        "children": [
+          {
+            "id": 11001,
+            "name": "中医",
+            "type": "folder",
+            "children": []
+          },
+          {
+            "id": 11002,
+            "name": "西医",
+            "type": "folder",
+            "children": []
+          },
+          {
+            "id": 11003,
+            "name": "养生",
+            "type": "folder",
+            "children": []
+          },
+          {
+            "id": 11004,
+            "name": "慢病管理",
+            "type": "folder",
+            "children": []
+          },
+          {
+            "id": 11005,
+            "name": "运动康复",
+            "type": "folder",
+            "children": []
+          }
+        ]
+      },
+      {
+        "id": 112,
+        "name": "教育/培训",
+        "type": "folder",
+        "children": [
+          {
+            "id": 12001,
+            "name": "K12教育",
+            "type": "folder",
+            "children": []
+          },
+          {
+            "id": 12002,
+            "name": "职业教育",
+            "type": "folder",
+            "children": []
+          },
+          {
+            "id": 12003,
+            "name": "成人教育",
+            "type": "folder",
+            "children": []
+          },
+          {
+            "id": 12004,
+            "name": "在线教育",
+            "type": "folder",
+            "children": []
+          }
+        ]
+      },
+      {
+        "id": 997,
+        "name": "本地链接",
+        "type": "folder",
+        "children": []
+      },
+      {
+        "id": 998,
+        "name": "失效链接",
+        "type": "folder",
+        "children": []
+      },
+      {
+        "id": 999,
+        "name": "其他",
+        "type": "folder",
+        "children": []
+      }
+    ]
+  }
+]

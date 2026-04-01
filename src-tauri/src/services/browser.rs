@@ -1,6 +1,10 @@
 use crate::models::{Bookmark, BookmarkFolder};
 use serde::{Deserialize, Serialize};
 use std::fs;
+use std::process::Command;
+
+pub mod chrome;
+pub mod edge;
 
 /**
  * Get bookmark folders from browser file
@@ -16,15 +20,87 @@ pub fn get_bookmark_folders(browser: &str) -> Result<Vec<BookmarkFolder>, String
 
     let mut roots = Vec::new();
 
-    if let Some(roots_obj) = json["roots"].as_object() {
-        for (_, root_node) in roots_obj {
-            if let Some(folder) = extract_folder_tree(root_node) {
-                roots.push(folder);
-            }
+    if let Some(root_node_1) = get_root_node_id_1(&json) {
+        if let Some(folder) = extract_folder_tree(root_node_1) {
+            roots.push(folder);
         }
     }
 
     Ok(roots)
+}
+
+/**
+ * Get root node with ID 1 from JSON object
+ *
+ * @param json JSON object
+ * @returns Root node with ID 1
+ */
+fn get_root_node_id_1(json: &serde_json::Value) -> Option<&serde_json::Value> {
+    if let Some(roots_obj) = json["roots"].as_object() {
+        for (_, root_node) in roots_obj {
+            if get_id_as_usize(root_node) == Some(1) {
+                return Some(root_node);
+            }
+        }
+    }
+    None
+}
+/**
+ * Collect bookmarks from JSON node
+ *
+ * @param node JSON node
+ * @param bookmarks Bookmark list
+ */
+fn collect_bookmarks(node: &serde_json::Value, bookmarks: &mut Vec<Bookmark>) {
+    if node["type"].as_str() == Some("url") {
+        if let (Some(name), Some(url)) = (node["name"].as_str(), node["url"].as_str()) {
+            bookmarks.push(Bookmark {
+                name: name.to_string(),
+                url: url.to_string(),
+                web_title: None,
+                description: None,
+                keywords: None,
+                status: "NoDetected".to_string(),
+            });
+        }
+    } else if let Some(children) = node["children"].as_array() {
+        for child in children {
+            collect_bookmarks(child, bookmarks);
+        }
+    }
+}
+
+fn count_bookmarks(node: &serde_json::Value) -> usize {
+    let mut count = 0;
+    if node["type"].as_str() == Some("url") {
+        count += 1;
+    } else if let Some(children) = node["children"].as_array() {
+        for child in children {
+            count += count_bookmarks(child);
+        }
+    }
+    count
+}
+
+/**
+ * Get all bookmarks from browser file
+ *
+ * @param browser Browser name
+ * @returns Bookmark list
+ */
+pub fn get_all_bookmarks(browser: &str) -> Result<Vec<Bookmark>, String> {
+    let path = get_bookmarks_path(browser)?;
+    let content = fs::read_to_string(path).map_err(|e| format!("读取书签文件失败: {}", e))?;
+    let json: serde_json::Value =
+        serde_json::from_str(&content).map_err(|e| format!("解析 JSON 失败: {}", e))?;
+
+    let mut bookmarks = Vec::new();
+
+    if let Some(root_node_1) = get_root_node_id_1(&json) {
+        collect_bookmarks(root_node_1, &mut bookmarks);
+    }
+
+    Ok(bookmarks)
 }
 
 /**
@@ -34,25 +110,29 @@ pub fn get_bookmark_folders(browser: &str) -> Result<Vec<BookmarkFolder>, String
  * @returns BookmarkFolder
  */
 fn extract_folder_tree(node: &serde_json::Value) -> Option<BookmarkFolder> {
-    let node_type = node["type"].as_str().unwrap_or("folder");
+    let is_folder = node["type"].as_str().map(|s| s == "folder").unwrap_or(false);
 
-    if node_type == "folder" {
-        let id = node["id"].as_str()?.to_string();
+    if is_folder {
+        let id = node["id"].as_str()?.parse::<usize>().ok()?; 
         let name = node["name"].as_str()?.to_string();
+        let guid = node["guid"].as_str()?.to_string();
+        
         let mut children_folders = Vec::new();
 
         if let Some(children) = node["children"].as_array() {
             for child in children {
-                if child["type"].as_str() == Some("folder") {
-                    if let Some(folder) = extract_folder_tree(child) {
-                        children_folders.push(folder);
-                    }
+                if let Some(folder) = extract_folder_tree(child) {
+                    children_folders.push(folder);
                 }
             }
         }
+
         Some(BookmarkFolder {
             id,
             name,
+            guid: Some(guid),
+            url: None,
+            type_: None,
             children: children_folders,
         })
     } else {
@@ -67,7 +147,7 @@ fn extract_folder_tree(node: &serde_json::Value) -> Option<BookmarkFolder> {
  * @param folder_id Folder ID
  * @returns Bookmark list
  */
-pub fn get_bookmarks_by_folder(browser: &str, folder_id: &str) -> Result<Vec<Bookmark>, String> {
+pub fn get_bookmarks_by_folder(browser: &str, folder_id: usize) -> Result<Vec<Bookmark>, String> {
     let path = get_bookmarks_path(browser)?;
     let content = fs::read_to_string(path).map_err(|e| format!("读取书签文件失败: {}", e))?;
     let json: serde_json::Value =
@@ -113,22 +193,32 @@ pub fn get_bookmarks_by_folder(browser: &str, folder_id: &str) -> Result<Vec<Boo
  */
 fn find_folder_node<'a>(
     node: &'a serde_json::Value,
-    target_id: &str,
+    target_id: usize,
 ) -> Option<&'a serde_json::Value> {
-    if node["id"].as_str() == Some(target_id) {
+    if get_id_as_usize(node) == Some(target_id) {
         return Some(node);
     }
 
     if let Some(children) = node["children"].as_array() {
         for child in children {
-            if child["type"].as_str() == Some("folder") || child["type"].as_str() == Some("url") {
-                if let Some(found) = find_folder_node(child, target_id) {
-                    return Some(found);
-                }
+            if let Some(found) = find_folder_node(child, target_id) {
+                return Some(found);
             }
         }
     }
     None
+}
+
+/**
+ * Get ID as usize from JSON node
+ *
+ * @param node JSON node
+ * @returns Option<usize>
+ */
+fn get_id_as_usize(node: &serde_json::Value) -> Option<usize> {
+    node["id"].as_u64()
+        .map(|n| n as usize)
+        .or_else(|| node["id"].as_str()?.parse().ok())
 }
 
 /**
@@ -202,16 +292,15 @@ pub fn get_bookmarks_num(browser: &str) -> Result<usize, String> {
         serde_json::from_str(&content).map_err(|e| format!("解析 JSON 失败: {}", e))?;
 
     let mut num = 0;
-    if let Some(roots_obj) = json["roots"].as_object() {
-        for (_, root_node) in roots_obj {
-            if let Some(children) = root_node["children"].as_array() {
-                num += children.len();
-            }
-        }
+    
+    if let Some(root_node_1) = get_root_node_id_1(&json) {
+        num = count_bookmarks(root_node_1);
     }
 
     Ok(num)
 }
+
+
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct BrowserStatus {
@@ -242,6 +331,17 @@ pub fn backup_bookmarks(browser: &str) -> Result<String, String> {
     let backup_path = format!("{}.backup", path);
     fs::copy(&path, &backup_path).map_err(|e| format!("Failed to backup bookmarks: {}", e))?;
     Ok(backup_path)
+}
+
+/**
+ * Check if backup file exists
+ *
+ * @param browser Browser name
+ * @returns True if backup file exists, False otherwise
+ */
+pub fn check_backup(browser: &str) -> bool {
+    let backup_path = format!("{}.backup", get_bookmarks_path(browser).unwrap());
+    fs::metadata(&backup_path).is_ok()
 }
 
 /**
@@ -310,4 +410,20 @@ fn is_edge_installed() -> bool {
     {
         false
     }
+}
+
+pub fn run_terminal_command(command: &str, args: &[&str]) -> Result<bool, String> {
+    let output = Command::new(command)
+        .args(args)
+        .output()
+        .map_err(|e| format!("命令执行失败：{}", e))?;
+
+    if !output.status.success() {
+        let err = String::from_utf8_lossy(&output.stderr);
+        eprintln!("命令返回错误：{}", err);
+        return Err(format!("{}", err));
+    }
+
+    let stdout = String::from_utf8_lossy(&output.stdout).to_string();
+    Ok(true)
 }

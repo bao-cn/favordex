@@ -9,3 +9,9 @@ pub(crate) fn is_local_address(url: &str) -> bool {
         || url.starts_with("http://192.168.")
         || url.starts_with("http://10.")
 }
+
+
+#[cfg(test)]
+mod test;
+
+

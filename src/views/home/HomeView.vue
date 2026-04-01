@@ -64,7 +64,7 @@
 
     <main class="flex-1 relative overflow-y-auto scroll-smooth custom-scrollbar">
       <transition name="page-fade" mode="out-in">
-        <div :key="activeTab" class="min-h-full p-10 max-w-7xl mx-auto">
+        <div :key="activeTab" class="min-h-full max-w-7xl mx-auto">
           <HomePage v-if="activeTab === 'home'" />
           <CategoryPage v-if="activeTab === 'categories'" />
           <SettingsPage v-if="activeTab === 'settings'" />

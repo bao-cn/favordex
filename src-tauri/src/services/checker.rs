@@ -3,6 +3,7 @@ use reqwest::Client;
 use scraper::{Html, Selector};
 use std::time::Duration;
 
+#[derive(Debug)]
 pub struct PageMetadata {
     pub is_alive: bool,
     pub description: Option<String>,
@@ -63,34 +64,5 @@ pub async fn get_page_metadata(url: &str, skip_local: bool) -> PageMetadata {
         is_alive: true,
         description,
         keywords,
-    }
-}
-
-/**
- * Check URL availability(Deprecated)
- *
- * @param url URL to check
- * @param skip_local Whether to skip local addresses
- * @returns True if URL is alive, False otherwise
- */
-pub async fn check_url(url: &str, skip_local: bool) -> Result<bool, String> {
-    if skip_local && url.starts_with(url) {
-        return Ok(true);
-    };
-
-    let client = match Client::builder()
-        .timeout(Duration::from_secs(8))
-        .user_agent("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36")
-        .build() {
-        Ok(client) => client,
-        Err(e) => return Err(e.to_string()),
-    };
-
-    match client.head(url).send().await {
-        Ok(resp) => Ok(resp.status().is_success()),
-        Err(_) => match client.get(url).send().await {
-            Ok(resp) => Ok(resp.status().is_success()),
-            Err(_) => Err("Failed to send GET request".to_string()),
-        },
     }
 }

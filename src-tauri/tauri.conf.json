@@ -13,6 +13,7 @@
     "windows": [
       {
         "title": "Favordex",
+        "label": "main",
         "width": 1600,
         "height": 900,
         "minWidth": 1600,

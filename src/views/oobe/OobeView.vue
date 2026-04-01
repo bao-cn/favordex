@@ -76,7 +76,7 @@
                   </Button>
                 </div>
               </div>
-              <Dialog>
+              <Dialog class="hidden">
                 <DialogTrigger>
                   <Button variant="ghost" class="text-xs font-bold uppercase tracking-widest">备份书签</Button>
                 </DialogTrigger>
@@ -87,11 +87,13 @@
                       请选择您已安装的浏览器，以备份书签
                     </DialogDescription>
                     <div class="flex items-center gap-2.5">
-                      <Button variant="outline" :disabled="!browsers.chrome" @click="handleBackupBookmarks(Ebrowser.Chrome)">
+                      <Button variant="outline" :disabled="!browsers.chrome"
+                        @click="handleBackupBookmarks(Ebrowser.Chrome)">
                         <img :src="Chrome" alt="Chrome" class="w-4 h-4" />
                         Google Chrome
                       </Button>
-                      <Button variant="outline" :disabled="!browsers.edge" @click="handleBackupBookmarks(Ebrowser.Edge)">
+                      <Button variant="outline" :disabled="!browsers.edge"
+                        @click="handleBackupBookmarks(Ebrowser.Edge)">
                         <img :src="Edge" alt="Edge" class="w-4 h-4" />
                         Microsoft Edge
                       </Button>
@@ -107,7 +109,7 @@
                 <div class="flex items-center justify-between">
                   <Label class="text-[11px] font-black uppercase text-slate-400 tracking-widest">AI 供应商</Label>
                   <div class="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-xl">
-                    <button v-for="m in (['openai', 'ollama'] as const)" :key="m"
+                    <button v-for="m in (['openai', 'ollama', 'google'] as const)" :key="m"
                       @click="preferences.aiSupplier.supplier = m"
                       :class="['px-4 py-1.5 text-[10px] font-black rounded-lg transition-all uppercase',
                         preferences.aiSupplier.supplier === m ? 'bg-white dark:bg-slate-700 text-primary shadow-sm scale-105' : 'text-slate-400 hover:text-slate-600']">
@@ -121,13 +123,14 @@
                     class="group flex items-center gap-3 px-4 py-3 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-transparent focus-within:border-primary/30 focus-within:bg-white dark:focus-within:bg-slate-900 transition-all">
                     <Network class="w-4 h-4 text-slate-400 group-focus-within:text-primary transition-colors" />
                     <input v-model="preferences.aiSupplier.apiUrl" placeholder="Endpoint URL"
+                      :disabled="preferences.aiSupplier.supplier !== 'ollama'"
                       class="bg-transparent text-sm w-full outline-none font-medium" />
                   </div>
 
-                  <div v-if="preferences.aiSupplier.supplier === 'openai'"
+                  <div v-if="preferences.aiSupplier.supplier === 'openai' || preferences.aiSupplier.supplier === 'google'"
                     class="group flex items-center gap-3 px-4 py-3 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-transparent focus-within:border-primary/30 focus-within:bg-white dark:focus-within:bg-slate-900 transition-all">
                     <KeyRound class="w-4 h-4 text-slate-400 group-focus-within:text-primary transition-colors" />
-                    <input v-model="preferences.aiSupplier.apiKey" type="password" placeholder="OpenAI API Key"
+                    <input v-model="preferences.aiSupplier.apiKey" type="password" placeholder="API Key"
                       class="bg-transparent text-sm w-full outline-none font-medium" />
                   </div>
 
@@ -200,6 +203,17 @@
                   <input v-model="preferences.timeout" type="number"
                     class="w-12 text-center bg-transparent text-xs font-bold outline-none" />
                   <span class="text-[10px] font-bold text-slate-400 uppercase">ms</span>
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between px-3">
+                <span class="text-[11px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-2">
+                  <Clock class="w-3 h-3" /> 最大任务数
+                </span>
+                <div class="flex items-center gap-2 px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
+                  <input v-model="preferences.max_tasks" type="number"
+                    class="w-12 text-center bg-transparent text-xs font-bold outline-none" />
+                  <span class="text-[10px] font-bold text-slate-400 uppercase">个</span>
                 </div>
               </div>
             </div>
@@ -281,7 +295,7 @@ const systemProxyClone = ref(StorageUtil.get<boolean>('systemProxy') || true)
 
 
 interface AiSupplier {
-  supplier: 'openai' | 'ollama'
+  supplier: 'openai' | 'ollama' | 'google'
   apiUrl: string
   apiKey: string
   model: string
@@ -292,6 +306,7 @@ interface Preferences {
   aiSupplier: AiSupplier
   automaticallyDeleteInvalidatedBookmarks: boolean
   timeout: number
+  max_tasks: number
   systemProxy: boolean
   userAuthorization: boolean
   isInit: boolean
@@ -306,8 +321,15 @@ const OpenAISupplier: AiSupplier = {
 
 const OllamaSupplier: AiSupplier = {
   supplier: 'ollama',
-  apiUrl: 'http://localhost:11434/api',
+  apiUrl: 'http://localhost:11434',
   apiKey: import.meta.env.OPENAI_KEY || '',
+  model: '',
+}
+
+const GoogleSupplier: AiSupplier = {
+  supplier: 'google',
+  apiUrl: 'https://generativelanguage.googleapis.com/v1beta',
+  apiKey: '',
   model: '',
 }
 
@@ -316,6 +338,7 @@ const preferences = ref<Preferences>({
   aiSupplier: OpenAISupplier,
   automaticallyDeleteInvalidatedBookmarks: true,
   timeout: 10000,
+  max_tasks: 3,
   systemProxy: true,
   userAuthorization: false,
   isInit: false,
@@ -327,6 +350,7 @@ const initLocalStorage = () => {
   StorageUtil.set<AiSupplier>('aiSupplier', OpenAISupplier)
   StorageUtil.set<boolean>('automaticallyDeleteInvalidatedBookmarks', false)
   StorageUtil.set<number>('timeout', 10000)
+  StorageUtil.set<number>('max_tasks', 3)
   StorageUtil.set<boolean>('systemProxy', true)
   StorageUtil.set<boolean>('userAuthorization', false)
   StorageUtil.set<boolean>('isInit', false)
@@ -344,6 +368,7 @@ const syncFromStorage = () => {
     },
     automaticallyDeleteInvalidatedBookmarks: StorageUtil.get<boolean>('automaticallyDeleteInvalidatedBookmarks') || true,
     timeout: StorageUtil.get<number>('timeout') || 10000,
+    max_tasks: StorageUtil.get<number>('max_tasks') || 3,
     systemProxy: StorageUtil.get<boolean>('systemProxy') || true,
     userAuthorization: StorageUtil.get<boolean>('userAuthorization') || false,
     isInit: StorageUtil.get<boolean>('isInit') || false,
@@ -375,7 +400,26 @@ onMounted(() => {
 
 watch(() => preferences.value.aiSupplier.supplier, (newVal) => {
   isVerified.value = false
-  preferences.value.aiSupplier.apiUrl = newVal === OpenAISupplier.supplier ? OpenAISupplier.apiUrl : OllamaSupplier.apiUrl
+  
+  switch (newVal) {
+        case OpenAISupplier.supplier:
+            preferences.value.aiSupplier.model = OpenAISupplier.model
+            preferences.value.aiSupplier.apiUrl = OpenAISupplier.apiUrl
+            preferences.value.aiSupplier.apiKey = OpenAISupplier.apiKey
+            break;
+        case OllamaSupplier.supplier:
+            preferences.value.aiSupplier.model = OllamaSupplier.model
+            preferences.value.aiSupplier.apiUrl = OllamaSupplier.apiUrl
+            preferences.value.aiSupplier.apiKey = OllamaSupplier.apiKey
+            break;
+        case GoogleSupplier.supplier:
+            preferences.value.aiSupplier.model = GoogleSupplier.model
+            preferences.value.aiSupplier.apiUrl = GoogleSupplier.apiUrl
+            preferences.value.aiSupplier.apiKey = GoogleSupplier.apiKey
+            break;
+        default:
+            break;
+    }
 })
 
 const handleBackupBookmarks = async (browser: Ebrowser) => {
@@ -401,12 +445,17 @@ const verifyAI = async () => {
   isVerifying.value = true
   console.log(preferences.value)
   availableModels.value = await getAiModels(preferences.value.aiSupplier.supplier, preferences.value.aiSupplier.apiUrl, preferences.value.aiSupplier.apiKey).then(res => {
-    console.log(res)
+    toast.success('连接成功，已获取模型列表')
+    isVerified.value = true
+    isVerifying.value = false
+    preferences.value.aiSupplier.model = availableModels.value[0]
     return res
+  }).catch(err => {
+    toast.error('连接失败，请检查配置项: ' + err)
+    isVerified.value = false
+    isVerifying.value = false
+    return []
   })
-  isVerified.value = true
-  isVerifying.value = false
-  preferences.value.aiSupplier.model = availableModels.value[0]
 }
 
 const saveAndFinish = () => {
@@ -420,6 +469,7 @@ const saveAndFinish = () => {
   StorageUtil.set<boolean>('automaticallyDeleteInvalidatedBookmarks', automaticallyDeleteInvalidatedBookmarksClone.value)
   StorageUtil.set<boolean>('systemProxy', systemProxyClone.value)
   StorageUtil.set<number>('timeout', preferences.value.timeout)
+  StorageUtil.set<number>('max_tasks', preferences.value.max_tasks)
   StorageUtil.set<boolean>('isInit', true)
 }
 
