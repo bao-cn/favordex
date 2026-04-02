@@ -127,7 +127,8 @@
                       class="bg-transparent text-sm w-full outline-none font-medium" />
                   </div>
 
-                  <div v-if="preferences.aiSupplier.supplier === 'openai' || preferences.aiSupplier.supplier === 'google'"
+                  <div
+                    v-if="preferences.aiSupplier.supplier === 'openai' || preferences.aiSupplier.supplier === 'google'"
                     class="group flex items-center gap-3 px-4 py-3 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-transparent focus-within:border-primary/30 focus-within:bg-white dark:focus-within:bg-slate-900 transition-all">
                     <KeyRound class="w-4 h-4 text-slate-400 group-focus-within:text-primary transition-colors" />
                     <input v-model="preferences.aiSupplier.apiKey" type="password" placeholder="API Key"
@@ -276,6 +277,9 @@ import {
 import { toast } from 'vue-sonner'
 import { getAiModels, checkBrowsers, backupBookmarks } from '@/api'
 import { Ebrowser } from '@/api'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
 defineExpose({ Ebrowser })
 
 // --- 状态定义 ---
@@ -400,26 +404,26 @@ onMounted(() => {
 
 watch(() => preferences.value.aiSupplier.supplier, (newVal) => {
   isVerified.value = false
-  
+
   switch (newVal) {
-        case OpenAISupplier.supplier:
-            preferences.value.aiSupplier.model = OpenAISupplier.model
-            preferences.value.aiSupplier.apiUrl = OpenAISupplier.apiUrl
-            preferences.value.aiSupplier.apiKey = OpenAISupplier.apiKey
-            break;
-        case OllamaSupplier.supplier:
-            preferences.value.aiSupplier.model = OllamaSupplier.model
-            preferences.value.aiSupplier.apiUrl = OllamaSupplier.apiUrl
-            preferences.value.aiSupplier.apiKey = OllamaSupplier.apiKey
-            break;
-        case GoogleSupplier.supplier:
-            preferences.value.aiSupplier.model = GoogleSupplier.model
-            preferences.value.aiSupplier.apiUrl = GoogleSupplier.apiUrl
-            preferences.value.aiSupplier.apiKey = GoogleSupplier.apiKey
-            break;
-        default:
-            break;
-    }
+    case OpenAISupplier.supplier:
+      preferences.value.aiSupplier.model = OpenAISupplier.model
+      preferences.value.aiSupplier.apiUrl = OpenAISupplier.apiUrl
+      preferences.value.aiSupplier.apiKey = OpenAISupplier.apiKey
+      break;
+    case OllamaSupplier.supplier:
+      preferences.value.aiSupplier.model = OllamaSupplier.model
+      preferences.value.aiSupplier.apiUrl = OllamaSupplier.apiUrl
+      preferences.value.aiSupplier.apiKey = OllamaSupplier.apiKey
+      break;
+    case GoogleSupplier.supplier:
+      preferences.value.aiSupplier.model = GoogleSupplier.model
+      preferences.value.aiSupplier.apiUrl = GoogleSupplier.apiUrl
+      preferences.value.aiSupplier.apiKey = GoogleSupplier.apiKey
+      break;
+    default:
+      break;
+  }
 })
 
 const handleBackupBookmarks = async (browser: Ebrowser) => {
@@ -471,6 +475,8 @@ const saveAndFinish = () => {
   StorageUtil.set<number>('timeout', preferences.value.timeout)
   StorageUtil.set<number>('max_tasks', preferences.value.max_tasks)
   StorageUtil.set<boolean>('isInit', true)
+
+  router.push({ name: 'Home' })
 }
 
 // --- UI 数据 ---
