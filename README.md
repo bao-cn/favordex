@@ -6,18 +6,17 @@
   <h2 align="center">Favordex: AI-Powered Smart Bookmark Manager</h2>
   <p align="center">
     Built with <b>Tauri + Rust + Vue 3</b>. Redefining how you collect and organize the web.
-    
   </p>
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Version-1.0.0--BETA-blue?style=for-the-badge" alt="Version">
+  <img src="https://img.shields.io/badge/Version-0.1.0--Alpha-blue?style=for-the-badge" alt="Version">
   <img src="https://img.shields.io/badge/License-MIT-emerald?style=for-the-badge" alt="License">
   <img src="https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-orange?style=for-the-badge" alt="Platform">
 </p>
 
 ---
-
+[中文](./README_CN.md) | English
 ### 🌟 Overview 
 
 **Favordex** is an open-source desktop application designed to solve the chaos of unorganized browser bookmarks. By leveraging AI (OpenAI/Ollama), it automatically categorizes and cleans your bookmark library.
