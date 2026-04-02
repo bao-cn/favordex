@@ -174,9 +174,9 @@ import { toast } from 'vue-sonner'
 
 // --- 数据结构定义 ---
 interface CategorySystem {
-    id: string;
-    name: string;
-    isDefault: boolean;
+    id: string,
+    name: string,
+    isDefault: boolean,
     children: IBookmarkFolder[];
 }
 
@@ -243,10 +243,11 @@ const createNewSystem = () => {
             { 
                 id: 1, 
                 name: '书签栏', 
+                type: 'folder',
                 children: [
-                    { id: 997, name: '本地链接', children: [] },
-                    { id: 998, name: '失效链接', children: [] },
-                    { id: 999, name: '其他', children: [] },
+                    { id: 997, name: '本地链接', type: 'folder', children: [] },
+                    { id: 998, name: '失效链接', type: 'folder', children: [] },
+                    { id: 999, name: '其他', type: 'folder', children: [] },
                 ] 
             }
         ]
@@ -359,7 +360,7 @@ const handleNodeAction = () => {
                 return
             }
 
-            const newNode = { id: newId, name: val, children: [] }
+            const newNode = { id: newId, name: val, type: 'folder', children: [] }
 
             const insertIndex = parentData.children.findIndex(c => Number(c.id) >= 997)
             if (insertIndex !== -1) {
@@ -385,7 +386,7 @@ const handleNodeAction = () => {
 
             newId = childrenIds.length === 0 ? startId : Math.max(...childrenIds) + 1
 
-            parentData.children.push({ id: newId, name: val, children: [] })
+            parentData.children.push({ id: newId, name: val, type: 'folder', children: [] })
         }
     } else {
         currentActionNodeData.value.name = val

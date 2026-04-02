@@ -31,6 +31,7 @@ pub fn run() {
             commands::get_bookmarks_num,
             commands::get_all_bookmarks,
             commands::organize_bookmarks,
+            commands::overlay_bookmarks_file,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

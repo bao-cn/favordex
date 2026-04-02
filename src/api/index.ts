@@ -15,6 +15,12 @@ export enum Ebrowser {
 export interface IBookmarkFolder {
     id: number,
     name: string,
+    guid?: string | null,
+    date_added?: number | null,
+    date_last_used?: number | null,
+    date_modified?: number | null,
+    type?: string | null,
+    url?: string | null,
     children: IBookmarkFolder[],
 }
 
@@ -121,4 +127,9 @@ export const listenToOrganizeProgress = async (
     );
 
     return unlisten;
+}
+
+export const overlayBookmarksFile = async (browser: Ebrowser, newContent: IBookmarkFolder[]) => {
+    const res: boolean = await invoke('overlay_bookmarks_file', { browser, newContent })
+    return res
 }

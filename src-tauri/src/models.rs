@@ -10,6 +10,12 @@ pub struct BookmarkFolder {
     pub url: Option<String>,
     #[serde(default, rename = "type")]
     pub type_: Option<String>,
+    #[serde(default)]
+    pub date_added: Option<u64>,
+    #[serde(default)]
+    pub date_last_used: Option<u64>,
+    #[serde(default)]
+    pub date_modified: Option<u64>,
     pub children: Vec<BookmarkFolder>,
 }
 
@@ -23,19 +29,6 @@ pub struct Bookmark {
     pub status: String,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct SubCategory {
-    pub name: String,
-    pub description: Option<String>,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct CategoryGroup {
-    pub primary: String,
-    pub secondaries: Vec<String>,
-}
-
-// 最终传给 AI 的上下文
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct ClassificationTask {
     pub title: String,

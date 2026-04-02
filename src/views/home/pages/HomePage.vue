@@ -10,12 +10,12 @@
                 class="flex gap-4 p-1.5 bg-slate-100 dark:bg-slate-800/50 rounded-2xl border border-slate-200/50 dark:border-slate-700/50 backdrop-blur-md">
                 <Button variant="ghost"
                     class="rounded-xl font-bold hover:bg-white dark:hover:bg-slate-700 shadow-none transition-all"
-                    @click="loadBookmarks(Ebrowser.Chrome)">
+                    @click="handleLoadClick(Ebrowser.Chrome)">
                     <img src="@/assets/chrome.svg" alt="Chrome" class="w-4 h-4 mr-2" /> 加载 Chrome
                 </Button>
                 <Button variant="ghost"
                     class="rounded-xl font-bold hover:bg-white dark:hover:bg-slate-700 shadow-none transition-all"
-                    @click="loadBookmarks(Ebrowser.Edge)">
+                    @click="handleLoadClick(Ebrowser.Edge)">
                     <img src="@/assets/edge.png" alt="Edge" class="w-4 h-4 mr-2" /> 加载 Edge
                 </Button>
             </div>
@@ -34,9 +34,9 @@
                         <p class="text-xs font-black uppercase text-blue-500 tracking-[0.2em]">总计书签</p>
                         <p class="text-lg font-black text-slate-800 dark:text-slate-100">{{ stats.total }}</p>
                     </div>
-                    <Button variant="outline" :disabled="!activeBrowser" @click="start()">
-                        <Sparkles class="w-5 h-5 text-yellow-400 fill-yellow-400" /> 开始整理
-                    </Button>
+                    <RainbowButton :disabled="!activeBrowser" @click="start()">
+                        <Sparkles class="w-5 h-5 text-yellow-400 fill-yellow-400" />&nbsp;&nbsp;开始整理
+                    </RainbowButton>
                 </CardTitle>
             </CardHeader>
 
@@ -93,9 +93,74 @@
                 </main>
             </CardContent>
         </Card>
+        <Dialog v-model:open="selectDialogVisible">
+            <DialogContent class="sm:max-w-[600px] rounded-3xl!">
+                <DialogHeader>
+                    <DialogTitle>选择 {{ activeBrowser }} 整理模式</DialogTitle>
+                </DialogHeader>
 
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+                    <div class="space-y-3">
+                        <div v-for="item in (browsersIndicator === Ebrowser.Chrome ? selectItems.chrome : selectItems.edge)"
+                            :key="item.mode" @click="!item.disabled && (selectedMode = item.mode)" :class="[
+                                'p-4 rounded-2xl border-2 transition-all relative',
+                                item.disabled ? 'opacity-50 cursor-not-allowed bg-slate-50' : 'cursor-pointer',
+                                selectedMode === item.mode
+                                    ? 'border-blue-500 bg-blue-50/10'
+                                    : 'border-slate-100 dark:border-slate-800 hover:border-slate-200'
+                            ]">
+                            <div class="flex items-start justify-between gap-2">
+                                <div class="min-w-0">
+                                    <p class="font-bold text-slate-800 dark:text-slate-200 text-sm">{{ item.label }}</p>
+                                    <p class="text-[11px] text-slate-500 mt-1 leading-tight">{{ item.tip }}</p>
+                                </div>
+                                <div class="w-4 h-4 mt-1 rounded-full border-2 flex-none flex items-center justify-center"
+                                    :class="selectedMode === item.mode ? 'border-blue-500' : 'border-slate-300'">
+                                    <div v-if="selectedMode === item.mode" class="w-2 h-2 rounded-full bg-blue-500">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div
+                        class="bg-slate-50 dark:bg-slate-900/50 rounded-2xl p-4 border border-slate-100 dark:border-slate-800">
+                        <h4
+                            class="text-xs font-black text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                            <Info class="w-3 h-3" /> 必要预处理步骤
+                        </h4>
+
+                        <div v-if="currentSelectedInfo" class="space-y-4">
+                            <ul class="space-y-2">
+                                <li v-for="(step, i) in currentSelectedInfo.steps" :key="i" class="flex gap-2">
+                                    <span
+                                        class="flex-none w-4 h-4 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-500 text-[10px] flex items-center justify-center font-bold">{{ i + 1 }}</span>
+                                    <span
+                                        class="text-xs font-medium text-slate-600 dark:text-slate-300">{{ step }}</span>
+                                </li>
+                            </ul>
+
+                            <div class="pt-3 border-t border-slate-200/50 dark:border-slate-700/50">
+                                <p class="text-[11px] leading-relaxed font-bold text-amber-600 dark:text-amber-500/80">
+                                    {{ currentSelectedInfo.warning }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <DialogFooter>
+                    <Button variant="outline" @click="selectDialogVisible = false" class="rounded-xl">取消</Button>
+                    <Button :disabled="currentSelectedInfo?.disabled" @click="handleSelectDialogConfirm"
+                        class="rounded-xl bg-blue-500 hover:bg-blue-600 text-white min-w-[120px]">
+                        <CheckCircle2 class="w-4 h-4 mr-2" /> 确认并加载
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
         <Dialog v-model:open="processDialogVisible">
-            <DialogContent class="sm:max-w-162.5 rounded-3xl!" @pointer-down-outside.prevent @escape-key-down.prevent :show-close-button="false">
+            <DialogContent class="sm:max-w-162.5 rounded-3xl!" @pointer-down-outside.prevent @escape-key-down.prevent
+                :show-close-button="false">
                 <DialogHeader>
                     <DialogTitle class="flex items-center gap-2">
                         <template v-if="isProcessing">
@@ -177,8 +242,8 @@
                             <div class="text-blue-500">
                                 <Info class="w-4 h-4" />
                             </div>
-                            <span
-                                class="text-xs font-bold text-slate-700 dark:text-slate-300">整理过程受到 AI 推理速度影响，当书签过多时速度会很慢，建议在低峰期进行操作</span>
+                            <span class="text-xs font-bold text-slate-700 dark:text-slate-300">整理过程受到 AI
+                                推理速度影响，当书签过多时速度会很慢，建议在低峰期进行操作</span>
                         </div>
                     </div>
                     <div>
@@ -231,18 +296,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import {
     FolderTree, Bookmark, Sparkles, Folder, Link2, LayoutGrid,
     Loader2, CheckCircle2, AlertTriangle, AlertCircle, Info
 } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
+import { RainbowButton } from '@/components/ui/rainbow-button'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { ElTree } from 'element-plus'
 import { open } from '@tauri-apps/plugin-shell'
-import { getBookmarkFolders, getBookmarksByFolder, getBookmarksNum, checkBackup, listenToOrganizeProgress, getAllBookmarks, organizeBookmarks } from '@/api'
+import { getBookmarkFolders, getBookmarksByFolder, getBookmarksNum, checkBackup, listenToOrganizeProgress, overlayBookmarksFile, organizeBookmarks } from '@/api'
 import { Ebrowser, IBookmarkFolder, IBookmark, IClassificationTask, IClassifyOptions, IProgressPayload } from '@/api'
 import { RecycleScroller } from 'vue-virtual-scroller'
 import StorageUtil from '@/utils/storageUtil'
@@ -260,7 +326,7 @@ const defaultProps = {
     label: 'name',
 }
 
-// === 新增整理与预览弹窗的相关状态 ===
+// === 整理与预览弹窗的相关状态 ===
 const processDialogVisible = ref(false)
 const isProcessing = ref(false)
 const progress = ref<IProgressPayload | null>(null)
@@ -268,6 +334,8 @@ const processStatus = ref('')
 const previewTreeData = ref<IBookmarkFolder[]>([])
 const confirmDialogVisible = ref(false)
 const confirmConfigs = ref<{ title: string; type: 'warning' | 'info' }[]>([])
+const selectDialogVisible = ref(false)
+
 let stopListen: () => void;
 
 import classification from '@/classification.json'
@@ -280,11 +348,18 @@ const handleBookmarkClick = async (url: string) => {
     await open(url)
 }
 
-const loadBookmarks = async (browser: Ebrowser) => {
+const handleLoadClick = (browser: Ebrowser) => {
     browsersIndicator = browser
     activeBrowser.value = browser.charAt(0).toUpperCase() + browser.slice(1)
+
+    selectedMode.value = browser === Ebrowser.Chrome ? Mode.CHROME_LOCAL : Mode.EDGE_LOCAL
+    isSelected.value = true
+
+    selectDialogVisible.value = true
+}
+
+const executeLoadBookmarks = async (browser: Ebrowser) => {
     await getBookmarkFolders(browser).then((res: IBookmarkFolder[]) => {
-        console.log(res)
         bookmarkTree.value = res
     })
     await getBookmarksNum(browser).then((res: number) => {
@@ -296,6 +371,69 @@ const loadBookmarksByFolder = async (browser: Ebrowser, folderId: number) => {
     await getBookmarksByFolder(browser, folderId).then((res: IBookmark[]) => {
         folderBookmarks.value = res
     })
+}
+
+enum Mode {
+    CHROME_SYNC,
+    CHROME_LOCAL,
+    EDGE_SYNC,
+    EDGE_LOCAL
+}
+
+let selectedMode = ref<Mode>(Mode.CHROME_LOCAL)
+let isSelected = ref(true)
+
+const selectItems = ref({
+    chrome: [
+        {
+            label: '无同步模式',
+            tip: '书签仅保存在本地，适合不需要跨设备使用的用户',
+            mode: Mode.CHROME_LOCAL,
+            warning: '注意：此模式下书签无法同步到云端。若此时开启了浏览器同步，可能会导致云端旧数据与本地整理后的数据发生合并冲突。',
+            steps: [
+                '建议备份：打开 chrome://bookmarks/ 点击右上角菜单选择“导出书签”',
+                '关闭同步：若已开启同步，请访问 chrome://settings/syncSetup/advanced 点击“自定义”并关闭“书签”同步'
+            ]
+        },
+        {
+            label: '有同步模式（暂未开放）',
+            tip: '支持整理后的书签自动同步到云端',
+            mode: Mode.CHROME_SYNC,
+            disabled: true,
+            warning: '此模式支持整理后的书签同步到云端且不会进行书签合并。',
+            steps: ['该模式正在开发中，敬请期待...']
+        }
+    ],
+    edge: [
+        {
+            label: '无同步模式',
+            tip: '书签仅保存在本地，适合不需要跨设备使用的用户',
+            mode: Mode.EDGE_LOCAL,
+            warning: '注意：此模式下书签无法同步到云端。若此时开启了浏览器同步，可能会导致云端旧数据与本地整理后的数据发生合并冲突。',
+            steps: [
+                '建议备份：打开 edge://favorites/ 点击右上角菜单选择“导出收藏夹”',
+                '关闭同步：访问 edge://settings/profiles/sync 点击关闭“收藏夹”同步选项'
+            ]
+        },
+        {
+            label: '有同步模式（暂未开放）',
+            tip: '支持整理后的书签自动同步到云端',
+            mode: Mode.EDGE_SYNC,
+            disabled: true,
+            warning: '此模式支持整理后的书签同步到云端且不会进行书签合并。',
+            steps: ['该模式正在开发中，敬请期待...']
+        }
+    ]
+})
+
+const currentSelectedInfo = computed(() => {
+    const list = browsersIndicator === Ebrowser.Chrome ? selectItems.value.chrome : selectItems.value.edge;
+    return list.find(item => item.mode === selectedMode.value);
+})
+
+const handleSelectDialogConfirm = () => {
+    selectDialogVisible.value = false
+    executeLoadBookmarks(browsersIndicator)
 }
 
 const selectedSystemId = ref('default')
@@ -323,17 +461,25 @@ const start = () => {
     const isSmart = StorageUtil.get<boolean>('smartCategorize')
     if (isSmart) {
         warnings.push({ title: '已启用“默认分类”，将按照默认分类体系进行整理', type: 'info' })
+        selectedSystemId.value = 'default'
     } else {
         const loaded: { id: string; name: string }[] = [{ id: 'default', name: '系统默认分类' }]
         const STORAGE_PREFIX = 'CATEGORY_SYS_'
+
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i)
             if (key && key.startsWith(STORAGE_PREFIX)) {
-                const sysData = StorageUtil.get<{ id: string, name: string }>(key)
-                if (sysData) loaded.push({ id: sysData.id, name: sysData.name })
+                const sysData = StorageUtil.get<any>(key)
+                if (sysData && sysData.id && sysData.name) {
+                    loaded.push({ id: sysData.id, name: sysData.name })
+                }
             }
         }
         availableSystems.value = loaded
+
+        if (!loaded.find(s => s.id === selectedSystemId.value)) {
+            selectedSystemId.value = 'default'
+        }
     }
 
     confirmConfigs.value = warnings
@@ -345,12 +491,30 @@ const handleProceedToProcess = async () => {
     processDialogVisible.value = true
     isProcessing.value = true
 
-    processStatus.value = `AI 正在整理书签，该操作需要一些时间，请喝一杯咖啡稍作等待...`
+    processStatus.value = `该过程受到模型推理速度影响，请喝杯咖啡稍作等待...`
+
+    let targetTaxonomy = classification; 
+
+    const isSmart = StorageUtil.get<boolean>('smartCategorize') ?? true;
+
+    if (!isSmart && selectedSystemId.value !== 'default') {
+        const STORAGE_PREFIX = 'CATEGORY_SYS_';
+
+        const fullKey = `${STORAGE_PREFIX}${selectedSystemId.value}`;
+
+        const customSys = StorageUtil.get<any>(fullKey);
+
+        if (customSys && customSys.children) {
+            targetTaxonomy = customSys.children;
+        } else {
+            console.warn("找到 Key 但未发现 children 字段，请检查数据结构", customSys);
+        }
+    }
 
     const task: IClassificationTask = {
         title: '',
         url: '',
-        taxonomy: classification,
+        taxonomy: targetTaxonomy, 
     }
 
     interface AiSupplier {
@@ -360,48 +524,50 @@ const handleProceedToProcess = async () => {
         model: string
     }
     const ai = StorageUtil.get<AiSupplier>('aiSupplier')
+
     const option: IClassifyOptions = {
         auto_sort_local: true,
         auto_sort_dead: !StorageUtil.get<boolean>('automaticallyDeleteInvalidatedBookmarks'),
         provider: ai?.supplier || 'google',
-        api_key: ai?.apiKey || import.meta.env.VITE_GOOGLE_API_KEY || '',
-        model: ai?.model || 'gemma-3-12b-it',
+        api_key: ai?.apiKey || '',
+        model: ai?.model || '',
         auto_delete: StorageUtil.get<boolean>('automaticallyDeleteInvalidatedBookmarks') || false,
-        system_prompt: StorageUtil.get<string>('systemPrompt') || undefined,
-        system_proxy: StorageUtil.get<boolean>('systemProxy') || true,
-        timeout_secs: StorageUtil.get<number>('timeoutSec') || 10,
-        max_tasks: StorageUtil.get<number>('maxTasks') || 3,
+        system_proxy: StorageUtil.get<boolean>('systemProxy') ?? true,
+        timeout_secs: Math.floor((StorageUtil.get<number>('timeout') ?? 10000) / 1000),
+        max_tasks: StorageUtil.get<number>('max_tasks') ?? 3,
     }
 
     stopListen = await listenToOrganizeProgress((data) => {
         progress.value = data;
     });
 
-    await organizeBookmarks(browsersIndicator, task, option).then((res: IBookmarkFolder[]) => {
-
-        console.log(res)
-        const resStr = JSON.stringify(res)
-        console.log(resStr)
+    try {
+        const res = await organizeBookmarks(browsersIndicator, task, option);
         previewTreeData.value = res;
-    })
-
-    await new Promise(r => setTimeout(r, 1000))
-    processStatus.value = '整理完成！'
-    await new Promise(r => setTimeout(r, 1000))
-
-    setTimeout(() => {
-        isProcessing.value = false
-    }, 500)
-
-    if (stopListen) stopListen();
+        console.log(JSON.stringify(res))
+        processStatus.value = '整理完成！';
+        setTimeout(() => { isProcessing.value = false }, 500);
+    } catch (e: any) {
+        toast.error(`整理书签异常：${e}`);
+        processDialogVisible.value = false;
+        isProcessing.value = false;
+    } finally {
+        if (stopListen) stopListen();
+    }
 }
 
 const handleConfirmOverwrite = async () => {
-
-    // TODO: 这里调用覆盖 API
+    await overlayBookmarksFile(browsersIndicator, previewTreeData.value).then((res: boolean) => {
+        if (!res) {
+            toast.error('覆盖书签失败，请重试')
+            return
+        }
+    }).catch((e) => {
+        toast.error(`覆盖书签异常，请重试：${e}`)
+        return
+    })
     toast.success(`成功覆盖 ${activeBrowser.value} 浏览器的书签！`)
     processDialogVisible.value = false
-
 }
 
 </script>

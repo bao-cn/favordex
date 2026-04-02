@@ -20,7 +20,9 @@ pub struct OllamaModel {
  *
  * @param client Client instance
  * @param prompt Prompt to send
- * @returns Category string
+ * @param options ClassifyOptions
+ * @param provider_url Ollama server URL
+ * @returns BookmarkFolder
  */
 pub async fn call_ollama(
     client: &Client,
@@ -34,22 +36,33 @@ pub async fn call_ollama(
         "prompt": prompt,
         "stream": false
     });
-    // println!("Body: {:?}", body);
 
-    let res = client
+    let res_result = client
         .post(url)
         .json(&body)
         .send()
-        .await
-        .map_err(|e| format!("请求失败: {}", e))?
-        .json::<serde_json::Value>()
-        .await
-        .map_err(|e| format!("解析 Ollama 响应格式失败: {}", e))?;
-    // println!("Response: {:?}", res);
-    let raw_content = res["response"].as_str().ok_or("AI 返回内容为空")?.trim();
+        .await;
 
-    let cleaned_json = clean_json_content(raw_content);
-    // println!("Cleaned JSON: {}", cleaned_json);
+    let res = match res_result {
+        Ok(response) => response.json::<serde_json::Value>().await.ok(),
+        Err(_) => None,
+    };
 
-    Ok(parse_to_folder(&cleaned_json, options))
+    let extracted_text = res.as_ref().and_then(|json| json["response"].as_str());
+
+    let final_folder = match extracted_text {
+        Some(raw_content) => {
+            let cleaned_json = clean_json_content(raw_content.trim());
+            parse_to_folder(&cleaned_json, options)
+        }
+        None => {
+            println!("警告: Ollama 响应提取失败或网络异常。响应原文: {:?}", res);
+            crate::ai_supplier::get_fallback_folder(
+                options.fallback_id.unwrap_or(crate::ai_supplier::FALLBACK_ID),
+                options.fallback_name.as_deref().unwrap_or(crate::ai_supplier::FALLBACK_NAME),
+            )
+        }
+    };
+
+    Ok(final_folder)
 }

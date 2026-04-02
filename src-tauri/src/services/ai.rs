@@ -6,9 +6,8 @@ use reqwest::Client;
  * Get category for a classification task
  *
  * @param task Classification task
- * @param provider AI provider
- * @param api_key API key for OpenAI
- * @returns Category string
+ * @param options ClassifyOptions
+ * @returns BookmarkFolder
  */
 pub async fn get_category(
     task: ClassificationTask,
@@ -43,7 +42,7 @@ pub async fn get_category(
  * @returns Classification prompt
  */
 pub fn build_classification_prompt(task: &ClassificationTask) -> String {
-    let mut taxonomy_text = task.taxonomy.clone();
+    let taxonomy_text = task.taxonomy.clone();
 
     let mut context = format!("Title: {}\nURL: {}\n", task.title, task.url);
     if let Some(desc) = &task.description {
@@ -78,7 +77,7 @@ pub fn build_classification_prompt(task: &ClassificationTask) -> String {
         ### OUTPUT EXAMPLE
         {{\"id\":3001,\"name\":\"Food Recipes\",\"children\":[]}}
         ### FINAL CHECK (BEFORE OUTPUT)
-        1. Correct classification from the given system
+        1. Correct classification from the given system (Excluding 997, 998)
         2. Valid, complete JSON with no extra characters
         3. Only the JSON object — nothing else",
         serde_json::to_string(&taxonomy_text).unwrap(),

@@ -20,8 +20,8 @@ pub struct OpenAIModel {
  *
  * @param client Client instance
  * @param prompt Prompt to send
- * @param api_key API key for OpenAI
- * @returns Category string
+ * @param options ClassifyOptions
+ * @returns BookmarkFolder
  */
 pub async fn call_openai(
     client: &Client,
@@ -37,23 +37,35 @@ pub async fn call_openai(
         "temperature": 0.3
     });
 
-    let res = client
+    let res_result = client
         .post(url)
         .bearer_auth(key)
         .json(&body)
         .send()
-        .await
-        .map_err(|e| format!("请求失败: {}", e))?
-        .json::<serde_json::Value>()
-        .await
-        .map_err(|e| format!("解析 OpenAI 响应格式失败: {}", e))?;
+        .await;
 
-    let raw_content = res["choices"][0]["message"]["content"]
-        .as_str()
-        .ok_or("AI 返回内容为空")?
-        .trim();
+    let res = match res_result {
+        Ok(response) => response.json::<serde_json::Value>().await.ok(),
+        Err(_) => None,
+    };
 
-    let cleaned_json = clean_json_content(raw_content);
+    let extracted_text = res.as_ref().and_then(|json| {
+        json["choices"][0]["message"]["content"].as_str()
+    });
 
-    Ok(parse_to_folder(&cleaned_json, options))
+    let final_folder = match extracted_text {
+        Some(raw_content) => {
+            let cleaned_json = clean_json_content(raw_content.trim());
+            parse_to_folder(&cleaned_json, options)
+        }
+        None => {
+            println!("警告: OpenAI 响应提取失败或网络异常。响应原文: {:?}", res);
+            crate::ai_supplier::get_fallback_folder(
+                options.fallback_id.unwrap_or(crate::ai_supplier::FALLBACK_ID),
+                options.fallback_name.as_deref().unwrap_or(crate::ai_supplier::FALLBACK_NAME),
+            )
+        }
+    };
+
+    Ok(final_folder)
 }

@@ -169,7 +169,7 @@
                     <div>
                       <component :is="LayoutGrid" class="w-4 h-4" />
                     </div>
-                    <Label class="text-sm font-bold cursor-pointer text-slate-700 dark:text-slate-300">智能分类</Label>
+                    <Label class="text-sm font-bold cursor-pointer text-slate-700 dark:text-slate-300">默认分类体系</Label>
                   </div>
                   <Switch v-model="smartCategorizeClone" />
                 </div>

@@ -30,5 +30,7 @@ uuid = { version = "1.22.0", features = ["v4", "fast-rng"] }
 scraper = "0.26.0"
 tauri-plugin-shell = "2"
 tauri-plugin-dialog = "2"
+chrono = "0.4.44"
 [target.'cfg(windows)'.dependencies]
 winreg = "0.52"
+chrono = "0.4.44"

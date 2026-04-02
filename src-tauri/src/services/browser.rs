@@ -1,7 +1,8 @@
 use crate::models::{Bookmark, BookmarkFolder};
 use serde::{Deserialize, Serialize};
 use std::fs;
-use std::process::Command;
+use chrono::Local;
+use uuid::Uuid;
 
 pub mod chrome;
 pub mod edge;
@@ -70,6 +71,12 @@ fn collect_bookmarks(node: &serde_json::Value, bookmarks: &mut Vec<Bookmark>) {
     }
 }
 
+/**
+ * Count bookmarks in JSON node
+ *
+ * @param node JSON node
+ * @returns Bookmark count
+ */
 fn count_bookmarks(node: &serde_json::Value) -> usize {
     let mut count = 0;
     if node["type"].as_str() == Some("url") {
@@ -133,6 +140,9 @@ fn extract_folder_tree(node: &serde_json::Value) -> Option<BookmarkFolder> {
             guid: Some(guid),
             url: None,
             type_: None,
+            date_added: None,
+            date_last_used: None,
+            date_modified: None,
             children: children_folders,
         })
     } else {
@@ -219,6 +229,87 @@ fn get_id_as_usize(node: &serde_json::Value) -> Option<usize> {
     node["id"].as_u64()
         .map(|n| n as usize)
         .or_else(|| node["id"].as_str()?.parse().ok())
+}
+
+/**
+ * Overlay bookmarks file with new content
+ *
+ * @param browser Browser name
+ * @param new_content New content to overlay
+ * @returns Result
+ */
+pub fn overlay_bookmarks_file(browser: &str, new_content: Vec<BookmarkFolder>) -> Result<bool, String> {
+    let path = get_bookmarks_path(browser)?;
+    let content = fs::read_to_string(&path).map_err(|e| format!("读取书签文件失败: {}", e))?;
+    let mut json: serde_json::Value =
+        serde_json::from_str(&content).map_err(|e| format!("解析 JSON 失败: {}", e))?;
+
+    let now_micros = Local::now().timestamp_micros() as u64;
+
+    let target_folder = new_content.iter().find(|f| f.id == 1)
+        .ok_or("未能在传入数据中找到 ID 为 1 的根文件夹")?;
+
+    let processed_json = folder_to_json(target_folder, now_micros);
+
+    let mut found = false;
+    if let Some(roots_obj) = json["roots"].as_object_mut() {
+        for (_, root_node) in roots_obj {
+            if get_id_as_usize(root_node) == Some(1) {
+                *root_node = processed_json.clone();
+                found = true;
+                break;
+            }
+        }
+    }
+
+    if !found {
+        return Err("在本地书签文件中未找到 ID 为 1 的书签栏".into());
+    }
+
+    let new_json_str = serde_json::to_string_pretty(&json)
+        .map_err(|e| format!("序列化 JSON 失败: {}", e))?;
+    
+    fs::write(path, new_json_str).map_err(|e| format!("写入书签文件失败: {}", e))?;
+
+    Ok(true)
+}
+
+/**
+ * Convert BookmarkFolder to JSON value with timestamp
+ *
+ * @param folder BookmarkFolder to convert
+ * @param timestamp Timestamp to use for date_added and date_last_used
+ * @returns serde_json::Value
+ */
+fn folder_to_json(folder: &BookmarkFolder, timestamp: u64) -> serde_json::Value {
+    let mut map = serde_json::Map::new();
+    
+    map.insert("id".to_string(), serde_json::Value::String(folder.id.to_string()));
+    map.insert("name".to_string(), serde_json::Value::String(folder.name.clone()));
+    
+    let guid = folder.guid.clone().unwrap_or_else(|| Uuid::new_v4().to_string().to_uppercase());
+    map.insert("guid".to_string(), serde_json::Value::String(guid));
+
+    let date_added = folder.date_added.unwrap_or(timestamp);
+    map.insert("date_added".to_string(), serde_json::Value::String(date_added.to_string()));
+    
+    let type_str = if folder.url.is_some() { "url" } else { "folder" };
+    map.insert("type".to_string(), serde_json::Value::String(type_str.to_string()));
+
+    if let Some(url) = &folder.url {
+        map.insert("url".to_string(), serde_json::Value::String(url.clone()));
+        let date_last_used = folder.date_last_used.unwrap_or(timestamp);
+        map.insert("date_last_used".to_string(), serde_json::Value::String(date_last_used.to_string()));
+    } else {
+        let children_values: Vec<serde_json::Value> = folder.children
+            .iter()
+            .map(|child| folder_to_json(child, timestamp))
+            .collect();
+        map.insert("children".to_string(), serde_json::Value::Array(children_values));
+        map.insert("date_modified".to_string(), serde_json::Value::String(timestamp.to_string()));
+    }
+
+    serde_json::Value::Object(map)
 }
 
 /**
@@ -410,20 +501,4 @@ fn is_edge_installed() -> bool {
     {
         false
     }
-}
-
-pub fn run_terminal_command(command: &str, args: &[&str]) -> Result<bool, String> {
-    let output = Command::new(command)
-        .args(args)
-        .output()
-        .map_err(|e| format!("命令执行失败：{}", e))?;
-
-    if !output.status.success() {
-        let err = String::from_utf8_lossy(&output.stderr);
-        eprintln!("命令返回错误：{}", err);
-        return Err(format!("{}", err));
-    }
-
-    let stdout = String::from_utf8_lossy(&output.stdout).to_string();
-    Ok(true)
 }

@@ -7,13 +7,12 @@
         </header>
 
         <div class="space-y-6 animate-in slide-in-from-right-8 duration-500">
-
             <div class="space-y-4">
                 <div class="flex items-center justify-between">
                     <Label class="text-[11px] font-black uppercase text-slate-400 tracking-widest">AI 供应商</Label>
                     <div class="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-xl">
                         <button v-for="m in (['openai', 'ollama', 'google'] as const)" :key="m"
-                            @click="preferences.aiSupplier.supplier = m"
+                            @click="handleSupplierChange(m)"
                             :class="['px-4 py-1.5 text-[10px] font-black rounded-lg transition-all uppercase',
                                 preferences.aiSupplier.supplier === m ? 'bg-white dark:bg-slate-700 text-primary shadow-sm scale-105' : 'text-slate-400 hover:text-slate-600']">
                             {{ m }}
@@ -22,14 +21,13 @@
                 </div>
 
                 <div class="grid gap-3">
-                    <div
-                        class="group flex items-center gap-3 px-4 py-3 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-transparent focus-within:border-primary/30 focus-within:bg-white dark:focus-within:bg-slate-900 transition-all">
+                    <div class="group flex items-center gap-3 px-4 py-3 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-transparent focus-within:border-primary/30 focus-within:bg-white dark:focus-within:bg-slate-900 transition-all">
                         <Network class="w-4 h-4 text-slate-400 group-focus-within:text-primary transition-colors" />
                         <input v-model="preferences.aiSupplier.apiUrl" placeholder="Endpoint URL"
                             class="bg-transparent text-sm w-full outline-none font-medium" />
                     </div>
 
-                    <div v-if="!(preferences.aiSupplier.supplier === 'ollama')"
+                    <div v-if="preferences.aiSupplier.supplier !== 'ollama'"
                         class="group flex items-center gap-3 px-4 py-3 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-transparent focus-within:border-primary/30 focus-within:bg-white dark:focus-within:bg-slate-900 transition-all">
                         <KeyRound class="w-4 h-4 text-slate-400 group-focus-within:text-primary transition-colors" />
                         <input v-model="preferences.aiSupplier.apiKey" type="password" placeholder="API Key"
@@ -43,20 +41,16 @@
                         {{ isVerifying ? '正在建立连接...' : '连接并发现模型' }}
                     </Button>
 
-                    <div v-else
-                        class="flex items-center gap-3 px-4 py-3 bg-green-500/10 border border-green-500/20 rounded-2xl animate-in slide-in-from-top-2">
-                        <Zap
-                            class="w-4 h-4 text-green-500 fill-green-500 group-focus-within:text-primary transition-colors" />
-                        <Select v-model="preferences.aiSupplier.model" class="bg-white dark:bg-slate-800">
-                            <SelectTrigger class="w-full bg-white">
+                    <div v-else class="flex items-center gap-3 px-4 py-3 bg-green-500/10 border border-green-500/20 rounded-2xl animate-in slide-in-from-top-2">
+                        <Zap class="w-4 h-4 text-green-500 fill-green-500" />
+                        <Select v-model="preferences.aiSupplier.model">
+                            <SelectTrigger class="w-full bg-transparent border-none shadow-none focus:ring-0 px-0">
                                 <SelectValue placeholder="请选择模型" />
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectGroup>
-                                    <SelectLabel>模型列表</SelectLabel>
-                                    <SelectItem v-for="m in availableModels" :key="m" :value="m">
-                                        {{ m }}
-                                    </SelectItem>
+                                    <SelectLabel>可用模型</SelectLabel>
+                                    <SelectItem v-for="m in availableModels" :key="m" :value="m">{{ m }}</SelectItem>
                                 </SelectGroup>
                             </SelectContent>
                         </Select>
@@ -65,54 +59,61 @@
             </div>
 
             <div class="space-y-2 border-t border-slate-100 dark:border-slate-800 pt-4">
-                <div
-                    class="flex items-center justify-between p-3 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
+                <div class="flex items-center justify-between p-3 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
                     <div class="flex items-center gap-3">
-                        <div>
-                            <component :is="LayoutGrid" class="w-4 h-4" />
-                        </div>
-                        <Label class="text-sm font-bold cursor-pointer text-slate-700 dark:text-slate-300">智能分类</Label>
+                        <LayoutGrid class="w-4 h-4 text-slate-400" />
+                        <Label class="text-sm font-bold cursor-pointer text-slate-700 dark:text-slate-300">
+                            <AnimatedTooltip :tip="'启用后，将使用默认分类体系对书签进行分类。'">默认分类体系</AnimatedTooltip>
+                        </Label>
                     </div>
-                    <Switch v-model="smartCategorizeClone" />
+                    <Switch v-model="preferences.smartCategorize" />
                 </div>
-                <div
-                    class="flex items-center justify-between p-3 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
+
+                <div class="flex items-center justify-between p-3 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
                     <div class="flex items-center gap-3">
-                        <div>
-                            <component :is="Trash2" class="w-4 h-4" />
-                        </div>
-                        <Label
-                            class="text-sm font-bold cursor-pointer text-slate-700 dark:text-slate-300">清理失效书签</Label>
+                        <Trash2 class="w-4 h-4 text-slate-400" />
+                        <Label class="text-sm font-bold cursor-pointer text-slate-700 dark:text-slate-300">
+                            <AnimatedTooltip :tip="'启用后，将自动删除书签中的失效项。'">清理失效书签</AnimatedTooltip>
+                        </Label>
                     </div>
-                    <Switch v-model="automaticallyDeleteInvalidatedBookmarksClone" />
+                    <Switch v-model="preferences.automaticallyDeleteInvalidatedBookmarks" />
                 </div>
-                <div
-                    class="flex items-center justify-between p-3 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
+
+                <div class="flex items-center justify-between p-3 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
                     <div class="flex items-center gap-3">
-                        <div>
-                            <component :is="Globe" class="w-4 h-4" />
-                        </div>
-                        <Label class="text-sm font-bold cursor-pointer text-slate-700 dark:text-slate-300">全局代理</Label>
+                        <Globe class="w-4 h-4 text-slate-400" />
+                        <Label class="text-sm font-bold cursor-pointer text-slate-700 dark:text-slate-300">
+                            <AnimatedTooltip :tip="'启用后，将使用系统代理进行请求，通常你需要配置代理服务器。'">全局代理</AnimatedTooltip>
+                        </Label>
                     </div>
-                    <Switch v-model="systemProxyClone" />
+                    <Switch v-model="preferences.systemProxy" />
                 </div>
             </div>
 
             <div class="flex items-center justify-between px-3">
                 <span class="text-[11px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-2">
-                    <Clock class="w-3 h-3" /> 超时时间
+                    <Clock class="w-3 h-3" /> <AnimatedTooltip :tip="'AI 请求的超时时间(ms)。建议 10000 以上。'">请求超时</AnimatedTooltip>
                 </span>
                 <div class="flex items-center gap-2 px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
-                    <input v-model="preferences.timeout" type="number"
-                        class="w-22 text-center bg-transparent text-xs font-bold outline-none" />
+                    <input v-model.number="preferences.timeout" type="number" class="w-22 text-center bg-transparent text-xs font-bold outline-none" />
                     <span class="text-[10px] font-bold text-slate-400 uppercase">ms</span>
                 </div>
             </div>
+
+            <div class="flex items-center justify-between px-3">
+                <span class="text-[11px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-2">
+                    <Clock class="w-3 h-3" /> <AnimatedTooltip :tip="'最大同时处理的 AI 任务数量。'">最大任务数</AnimatedTooltip>
+                </span>
+                <div class="flex items-center gap-2 px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
+                    <input v-model.number="preferences.max_tasks" type="number" class="w-12 text-center bg-transparent text-xs font-bold outline-none" />
+                    <span class="text-[10px] font-bold text-slate-400 uppercase">个</span>
+                </div>
+            </div>
         </div>
+
         <div class="flex items-center px-3">
-            <Button variant="ghost" size="sm" @click="reset"
-                class="text-slate-400 hover:text-primary transition-colors">
-                <RotateCcw class="w-4 h-4" /> 恢复默认
+            <Button variant="ghost" size="sm" @click="reset" class="text-slate-400 hover:text-primary transition-colors">
+                <RotateCcw class="w-4 h-4 mr-1" /> 恢复默认
             </Button>
             <div class="flex-1"></div>
             <Button variant="default" size="sm" class="rounded-xl border-primary/20 font-bold h-11"
@@ -122,30 +123,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue'
-import {
-    Trash2, Network, KeyRound, LayoutGrid, Globe, RotateCcw, Zap, Clock
-} from 'lucide-vue-next'
+import { ref, onMounted } from 'vue'
+import { Trash2, Network, KeyRound, LayoutGrid, Globe, RotateCcw, Zap, Clock, Loader2 } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
-import StorageUtil from '@/utils/storageUtil'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
-import {
-    Select,
-    SelectContent,
-    SelectGroup,
-    SelectItem,
-    SelectLabel,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select'
+import { AnimatedTooltip } from '@/components/ui/animated-tooltip'
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select'
+import StorageUtil from '@/utils/storageUtil'
 import { getAiModels } from '@/api'
 import { toast } from 'vue-sonner'
 
-const isVerifying = ref(false)              // 是否正在验证
-const isVerified = ref(false)               // 是否验证通过
-const availableModels = ref<string[]>([])   // 可用模型列表
-
+// --- 类型定义 ---
 interface AiSupplier {
     supplier: 'openai' | 'ollama' | 'google'
     apiUrl: string
@@ -158,151 +147,125 @@ interface Preferences {
     aiSupplier: AiSupplier
     automaticallyDeleteInvalidatedBookmarks: boolean
     timeout: number
+    max_tasks: number
     systemProxy: boolean
-    userAuthorization: boolean
     isInit: boolean
 }
 
-const OpenAISupplier: AiSupplier = {
-    supplier: 'openai',
-    apiUrl: 'https://api.openai.com/v1',
-    apiKey: import.meta.env.VITE_OPENAI_KEY || '',
-    model: '',
+// --- 常量配置 ---
+const DEFAULT_SUPPLIERS: Record<AiSupplier['supplier'], AiSupplier> = {
+    openai: {
+        supplier: 'openai',
+        apiUrl: 'https://api.openai.com/v1',
+        apiKey: import.meta.env.VITE_OPENAI_KEY || '',
+        model: '',
+    },
+    ollama: {
+        supplier: 'ollama',
+        apiUrl: 'http://localhost:11434/',
+        apiKey: '',
+        model: '',
+    },
+    google: {
+        supplier: 'google',
+        apiUrl: 'https://generativelanguage.googleapis.com/',
+        apiKey: import.meta.env.VITE_GOOGLE_API_KEY || '',
+        model: '',
+    }
 }
 
-const OllamaSupplier: AiSupplier = {
-    supplier: 'ollama',
-    apiUrl: 'http://localhost:11434/',
-    apiKey: '',
-    model: '',
-}
+// --- 响应式状态 ---
+const isVerifying = ref(false)
+const isVerified = ref(false)
+const availableModels = ref<string[]>([])
 
-const GoogleSupplier: AiSupplier = {
-    supplier: 'google',
-    apiUrl: 'https://generativelanguage.googleapis.com/',
-    apiKey: import.meta.env.VITE_GOOGLE_API_KEY || '',
-    model: '',
-}
-
-
-
-const smartCategorizeClone = ref(StorageUtil.get<boolean>('smartCategorize') || true)
-const automaticallyDeleteInvalidatedBookmarksClone = ref(StorageUtil.get<boolean>('automaticallyDeleteInvalidatedBookmarks') || false)
-const systemProxyClone = ref(StorageUtil.get<boolean>('systemProxy') || true)
-
-const preferences = ref<Preferences>({
+// 使用函数获取初始默认值
+const getInitialPreferences = (): Preferences => ({
     smartCategorize: true,
-    aiSupplier: OpenAISupplier,
-    automaticallyDeleteInvalidatedBookmarks: true,
+    aiSupplier: { ...DEFAULT_SUPPLIERS.openai },
+    automaticallyDeleteInvalidatedBookmarks: false,
     timeout: 10000,
+    max_tasks: 3,
     systemProxy: true,
-    userAuthorization: false,
     isInit: false,
 })
 
-const initLocalStorage = () => {
-    StorageUtil.set<boolean>('smartCategorize', true)
-    StorageUtil.set<AiSupplier>('aiSupplier', OpenAISupplier)
-    StorageUtil.set<boolean>('automaticallyDeleteInvalidatedBookmarks', false)
-    StorageUtil.set<number>('timeout', 10000)
-    StorageUtil.set<boolean>('systemProxy', true)
-    StorageUtil.set<boolean>('userAuthorization', false)
-    StorageUtil.set<boolean>('isInit', false)
-}
+const preferences = ref<Preferences>(getInitialPreferences())
 
+// --- 核心方法 ---
 
-
+// 从存储同步数据
 const syncFromStorage = () => {
-    const ai = StorageUtil.get<AiSupplier>('aiSupplier') || OpenAISupplier
-    preferences.value = {
-        smartCategorize: StorageUtil.get<boolean>('smartCategorize') || true,
-        aiSupplier: {
-            supplier: ai.supplier,
-            apiUrl: ai.apiUrl,
-            apiKey: ai.apiKey,
-            model: ai.model,
-        },
-        automaticallyDeleteInvalidatedBookmarks: StorageUtil.get<boolean>('automaticallyDeleteInvalidatedBookmarks') || true,
-        timeout: StorageUtil.get<number>('timeout') || 10000,
-        systemProxy: StorageUtil.get<boolean>('systemProxy') || true,
-        userAuthorization: StorageUtil.get<boolean>('userAuthorization') || false,
-        isInit: StorageUtil.get<boolean>('isInit') || false,
-    }
-    smartCategorizeClone.value = StorageUtil.get<boolean>('smartCategorize') || true
-    automaticallyDeleteInvalidatedBookmarksClone.value = StorageUtil.get<boolean>('automaticallyDeleteInvalidatedBookmarks') || false
-    systemProxyClone.value = StorageUtil.get<boolean>('systemProxy') || true
-    if (preferences.value.aiSupplier.model) {
-        isVerified.value = true
-        availableModels.value = [preferences.value.aiSupplier.model]
+    // 使用 ?? 确保 false 值能被正确识别，而不是回退到默认的 true
+    preferences.value.smartCategorize = StorageUtil.get<boolean>('smartCategorize') ?? true
+    preferences.value.automaticallyDeleteInvalidatedBookmarks = StorageUtil.get<boolean>('automaticallyDeleteInvalidatedBookmarks') ?? false
+    preferences.value.systemProxy = StorageUtil.get<boolean>('systemProxy') ?? true
+    preferences.value.timeout = StorageUtil.get<number>('timeout') ?? 10000
+    preferences.value.max_tasks = StorageUtil.get<number>('max_tasks') ?? 3
+    
+    const storedAi = StorageUtil.get<AiSupplier>('aiSupplier')
+    if (storedAi) {
+        preferences.value.aiSupplier = storedAi
+        if (storedAi.model) {
+            isVerified.value = true
+            availableModels.value = [storedAi.model]
+        }
     }
 }
 
+// 切换供应商逻辑
+const handleSupplierChange = (supplier: AiSupplier['supplier']) => {
+    isVerified.value = false
+    availableModels.value = []
+    // 切换到对应供应商的默认配置
+    preferences.value.aiSupplier = { ...DEFAULT_SUPPLIERS[supplier] }
+}
+
+// 验证 AI
 const verifyAI = async () => {
     isVerifying.value = true
-    console.log(preferences.value)
-    availableModels.value = await getAiModels(preferences.value.aiSupplier.supplier, preferences.value.aiSupplier.apiUrl, preferences.value.aiSupplier.apiKey).then(res => {
-        isVerified.value = true
+    try {
+        const { supplier, apiUrl, apiKey } = preferences.value.aiSupplier
+        const models = await getAiModels(supplier, apiUrl, apiKey)
+        
+        if (models && models.length > 0) {
+            availableModels.value = models
+            preferences.value.aiSupplier.model = models[0]
+            isVerified.value = true
+            toast.success(`连接成功，找到 ${models.length} 个可用模型`)
+        } else {
+            throw new Error('未发现可用模型')
+        }
+    } catch (err: any) {
+        toast.error(`验证失败: ${err.message || '网络连接异常'}`)
+        isVerified.value = false
+    } finally {
         isVerifying.value = false
-        preferences.value.aiSupplier.model = availableModels.value[0]
-        toast.success(`找到${availableModels.value.length}个可用模型`)
-        return res
-    }).catch(err => {
-        toast.error(`验证 AI 模型失败: ${err.message}`)
-        isVerifying.value = false
-        return []
-    })
-
-}
-
-const reset = () => {
-    initLocalStorage()
-    syncFromStorage()
-}
-
-const saveAndFinish = () => {
-    StorageUtil.set<AiSupplier>('aiSupplier', {
-        supplier: preferences.value.aiSupplier.supplier,
-        model: preferences.value.aiSupplier.model,
-        apiUrl: preferences.value.aiSupplier.apiUrl,
-        apiKey: preferences.value.aiSupplier.apiKey,
-    })
-    StorageUtil.set<boolean>('smartCategorize', smartCategorizeClone.value)
-    StorageUtil.set<boolean>('automaticallyDeleteInvalidatedBookmarks', automaticallyDeleteInvalidatedBookmarksClone.value)
-    StorageUtil.set<boolean>('systemProxy', systemProxyClone.value)
-    StorageUtil.set<number>('timeout', preferences.value.timeout)
-    StorageUtil.set<boolean>('isInit', true)
-    toast.success('设置已保存')
-}
-
-onMounted(() => {
-    syncFromStorage()
-})
-
-
-
-watch(() => preferences.value.aiSupplier.supplier, (newVal) => {
-    isVerified.value = false
-
-    switch (newVal) {
-        case OpenAISupplier.supplier:
-            preferences.value.aiSupplier.model = OpenAISupplier.model
-            preferences.value.aiSupplier.apiUrl = OpenAISupplier.apiUrl
-            preferences.value.aiSupplier.apiKey = OpenAISupplier.apiKey
-            break;
-        case OllamaSupplier.supplier:
-            preferences.value.aiSupplier.model = OllamaSupplier.model
-            preferences.value.aiSupplier.apiUrl = OllamaSupplier.apiUrl
-            preferences.value.aiSupplier.apiKey = OllamaSupplier.apiKey
-            break;
-        case GoogleSupplier.supplier:
-            preferences.value.aiSupplier.model = GoogleSupplier.model
-            preferences.value.aiSupplier.apiUrl = GoogleSupplier.apiUrl
-            preferences.value.aiSupplier.apiKey = GoogleSupplier.apiKey
-            break;
-        default:
-            break;
     }
-})
-</script>
+}
 
-<style scoped></style>
+// 保存
+const saveAndFinish = () => {
+    const p = preferences.value
+    StorageUtil.set('aiSupplier', p.aiSupplier)
+    StorageUtil.set('smartCategorize', p.smartCategorize)
+    StorageUtil.set('automaticallyDeleteInvalidatedBookmarks', p.automaticallyDeleteInvalidatedBookmarks)
+    StorageUtil.set('systemProxy', p.systemProxy)
+    StorageUtil.set('timeout', p.timeout)
+    StorageUtil.set('max_tasks', p.max_tasks)
+    StorageUtil.set('isInit', true)
+    toast.success('配置已保存')
+}
+
+// 重置
+const reset = () => {
+    preferences.value = getInitialPreferences()
+    isVerified.value = false
+    availableModels.value = []
+    // 立即清除存储并写入默认
+    saveAndFinish()
+    toast.info('已恢复默认配置')
+}
+
+onMounted(syncFromStorage)
+</script>

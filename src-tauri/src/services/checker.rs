@@ -15,9 +15,11 @@ pub struct PageMetadata {
  *
  * @param url URL to check
  * @param skip_local Whether to skip local addresses
+ * @param timeout_ms Timeout in milliseconds
+ * @param sys_proxy Whether to use system proxy
  * @returns Page metadata
  */
-pub async fn get_page_metadata(url: &str, skip_local: bool) -> PageMetadata {
+pub async fn get_page_metadata(url: &str, skip_local: bool, timeout_ms: u64, sys_proxy: bool) -> PageMetadata {
     if skip_local && is_local_address(url) {
         return PageMetadata {
             is_alive: true,
@@ -26,10 +28,23 @@ pub async fn get_page_metadata(url: &str, skip_local: bool) -> PageMetadata {
         };
     }
 
-    let client = Client::builder()
-        .timeout(Duration::from_secs(8))
-        .user_agent("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36")
-        .build().unwrap();
+    let timeout_duration = Duration::from_millis(timeout_ms);
+
+    let mut client_builder = Client::builder()
+        .timeout(timeout_duration)
+        .user_agent("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36");
+
+    if !sys_proxy {
+        client_builder = client_builder.no_proxy();
+    } 
+    let client = match client_builder.build() {
+        Ok(c) => c,
+        Err(_) => return PageMetadata {
+            is_alive: false,
+            description: None,
+            keywords: None,
+        },
+    };
 
     let resp = match client.get(url).send().await {
         Ok(r) if r.status().is_success() => r,

@@ -5,6 +5,7 @@ use futures::StreamExt;
 use serde::Serialize;
 use std::collections::HashMap;
 use tauri::Emitter;
+use chrono::Local;
 
 use crate::AppConfig;
 
@@ -72,7 +73,6 @@ pub async fn organize_bookmarks(
     options: ClassifyOptions,
     config: tauri::State<'_, AppConfig>,
 ) -> Result<Vec<BookmarkFolder>, String> {
-    // 1. 初始化数据
     let bookmarks = browser::get_all_bookmarks(&browser).map_err(|e| e.to_string())?;
     let total = bookmarks.len();
     if total == 0 {
@@ -82,8 +82,8 @@ pub async fn organize_bookmarks(
     let max_concurrent = options.max_tasks.unwrap_or(3) as usize;
     let mut folder_buffer: HashMap<usize, Vec<BookmarkFolder>> = HashMap::new();
 
-    let mut stream = futures::stream::iter(bookmarks.into_iter().enumerate())
-        .map(|(index, bookmark)| {
+    let mut stream = futures::stream::iter(bookmarks.into_iter())
+        .map(|bookmark| {
             let task_inner = ClassificationTask {
                 title: bookmark.name.clone(),
                 url: bookmark.url.clone(),
@@ -93,7 +93,6 @@ pub async fn organize_bookmarks(
             };
             let opt_inner = options.clone();
             let cfg_inner = config.inner().clone();
-            let app_inner = app.clone();
 
             async move {
                 let result = smart_classify_v3(task_inner, opt_inner, &cfg_inner).await;
@@ -103,7 +102,6 @@ pub async fn organize_bookmarks(
         .buffer_unordered(max_concurrent);
 
     let mut completed = 0;
-    // 4. 收集结果
     while let Some((bookmark, result)) = stream.next().await {
         completed += 1;
         println!("emit 进度: {}/{} - {}", completed, total, bookmark.name);
@@ -124,6 +122,9 @@ pub async fn organize_bookmarks(
                 guid: Some(uuid::Uuid::new_v4().to_string()),
                 url: Some(bookmark.url.clone()),
                 type_: Some("url".to_string()),
+                date_added: Some(Local::now().timestamp_millis() as u64),
+                date_last_used: Some(0 as u64),
+                date_modified: Some(Local::now().timestamp_millis() as u64),
                 children: Vec::new(),
             };
 
@@ -135,7 +136,6 @@ pub async fn organize_bookmarks(
 
     }
 
-    // 5. 递归合并
     let mut tree = task.taxonomy.clone();
     merge_buffer_into_forest(&mut tree, &mut folder_buffer);
     Ok(tree)
@@ -155,11 +155,14 @@ pub async fn smart_classify_v3(
             guid: None,
             url: None,
             type_: None,
+            date_added: None,
+            date_last_used: None,
+            date_modified: None,
             children: Vec::new(),
         });
     }
 
-    let metadata = checker::get_page_metadata(&task.url, true).await;
+    let metadata = checker::get_page_metadata(&task.url, true, options.task_timeout_secs.unwrap_or(10000), options.system_proxy).await;
 
     if !metadata.is_alive {
         if options.auto_delete {
@@ -169,6 +172,9 @@ pub async fn smart_classify_v3(
                 guid: None,
                 url: None,
                 type_: None,
+                date_added: None,
+                date_last_used: None,
+                date_modified: None,
                 children: Vec::new(),
             });
         }
@@ -179,6 +185,9 @@ pub async fn smart_classify_v3(
                 guid: None,
                 url: None,
                 type_: None,
+                date_added: None,
+                date_last_used: None,
+                date_modified: None,
                 children: Vec::new(),
             });
         }
@@ -188,7 +197,9 @@ pub async fn smart_classify_v3(
     final_task.description = metadata.description;
     final_task.keywords = metadata.keywords;
 
-    ai::get_category(final_task, &options).await
+    let res = ai::get_category(final_task, &options).await;
+    println!("AI 分类结果: {:?}", res);
+    res
 }
 
 fn merge_buffer_into_tree(
@@ -210,4 +221,12 @@ fn merge_buffer_into_forest(
     for node in nodes {
         merge_buffer_into_tree(node, buffer);
     }
+}
+
+#[tauri::command]
+pub async fn overlay_bookmarks_file(
+    browser: String,
+    new_content: Vec<BookmarkFolder>,
+) -> Result<bool, String> {
+    browser::overlay_bookmarks_file(&browser, new_content)
 }

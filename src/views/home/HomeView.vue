@@ -10,8 +10,8 @@
           <Bookmark class="w-5 h-5" />
         </div>
         <div>
-          <span class="font-black tracking-tighter text-xl block leading-tight">Favordex</span>
-          <span class="text-[10px] font-bold text-primary/60 uppercase tracking-widest">AI 浏览器书签整理</span>
+          <span class="font-black tracking-tighter text-xl leading-tight flex items-center gap-1">Favordex</span>
+          <span class="text-[10px] font-bold text-primary/60 uppercase tracking-widest">AI 赋能的书签整理工具</span>
         </div>
       </div>
 
@@ -84,7 +84,6 @@ import HomePage from './pages/HomePage.vue'
 import CategoryPage from './pages/CategoryPage.vue'
 import AboutPage from './pages/AboutPage.vue'
 import SettingsPage from './pages/SettingsPage.vue'
-
 
 const activeTab = ref('home')
 </script>

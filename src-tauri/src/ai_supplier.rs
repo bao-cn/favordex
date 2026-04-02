@@ -29,8 +29,8 @@ impl FromStr for AiProvider {
     }
 }
 
-const FALLBACK_ID: usize = 115;
-const FALLBACK_NAME: &str = "Others";
+pub const FALLBACK_ID: usize = 999;
+pub const FALLBACK_NAME: &str = "Others";
 
 /**
  * Get models from AI provider
@@ -95,7 +95,6 @@ pub async fn get_models(
         }
         AiProvider::Google => {
             let key = api_key.ok_or("Google API Key 未设置")?;
-            // 增加一个过滤参数：只有支持 generateContent 的模型才是我们要的
             let url = format!(
                 "https://generativelanguage.googleapis.com/v1beta/models?key={}",
                 key
@@ -109,8 +108,6 @@ pub async fn get_models(
                 .json()
                 .await
                 .map_err(|e| {
-                    // 这里建议打印出原始文本，因为 API Key 错误或欠费时，
-                    // Google 会返回一个不同结构的 Error 对象，导致 json 解析失败
                     format!(
                         "解析 Google Gemini 响应失败（可能是 Key 无效或格式变动）: {}",
                         e
@@ -120,20 +117,17 @@ pub async fn get_models(
             let model_names: Vec<String> = res
                 .models
                 .into_iter()
-                // 过滤：必须支持生成内容
                 .filter(|m| {
                     m.methods
                         .iter()
                         .any(|s| s == "generateContent")
                 })
-                // 转换：去掉 "models/" 前缀
                 .map(|m| {
                     m.name
                         .strip_prefix("models/")
                         .unwrap_or(&m.name)
                         .to_string()
                 })
-                // 额外过滤：排除一些预览版或实验性模型（可选）
                 .filter(|name| !name.contains("vision") || name.contains("1.5"))
                 .collect();
 
@@ -143,21 +137,37 @@ pub async fn get_models(
 
             Ok(model_names)
         }
-        _ => Err("未知的 AI 供应商".to_string()),
     }
 }
 
+/**
+ * Get fallback bookmark folder
+ *
+ * @param fallback_id Fallback ID
+ * @param fallback_name Fallback name
+ * @returns BookmarkFolder
+ */
 fn get_fallback_folder(fallback_id: usize, fallback_name: &str) -> BookmarkFolder {
     BookmarkFolder {
         id: fallback_id,
         name: fallback_name.to_string(),
-        guid: Some(fallback_id.to_string().replace(" ", "").to_string()),
+        guid: None,
         url: None,
         type_: None,
+        date_added: None,
+        date_last_used: None,
+        date_modified: None,
         children: vec![],
     }
 }
 
+/**
+ * Parse JSON string to BookmarkFolder
+ *
+ * @param json_str JSON string
+ * @param options ClassifyOptions
+ * @returns BookmarkFolder
+ */
 fn parse_to_folder(json_str: &str, options: &ClassifyOptions) -> BookmarkFolder {
     match serde_json::from_str::<BookmarkFolder>(json_str) {
         Ok(parsed) if parsed.id > 0 => {
@@ -176,7 +186,12 @@ fn parse_to_folder(json_str: &str, options: &ClassifyOptions) -> BookmarkFolder 
         _ => get_fallback_folder(FALLBACK_ID, FALLBACK_NAME),
     }
 }
-
+/**
+ * Clean and extract JSON content from raw AI response
+ *
+ * @param raw Raw string from AI response
+ * @returns Cleaned JSON string
+ */
 fn clean_json_content(raw: &str) -> String {
     let mut s = raw.trim();
 
