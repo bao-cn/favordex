@@ -17,7 +17,7 @@ export const router = createRouter({
   ]
 })
 
-router.beforeEach((to, from, next) => {
+router.beforeEach((to, _, next) => {
   const isOobeCompleted = StorageUtil.get<boolean>('isInit') === true
 
   if (!isOobeCompleted && to.name !== 'OOBE') {
