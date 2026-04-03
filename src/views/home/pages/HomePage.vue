@@ -1,5 +1,5 @@
 <template>
-    <div class="p-8 h-screen w-full flex flex-col gap-8 bg-slate-50/30 dark:bg-slate-950 overflow-hidden">
+    <div class="p-8 h-screen w-full flex flex-col gap-8 bg-slate-50/30 dark:bg-slate-950 overflow-hidden animate-in slide-in-from-bottom-6 duration-500">
 
         <header class="flex justify-between items-end flex-none">
             <div class="space-y-1">

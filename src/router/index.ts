@@ -7,7 +7,30 @@ export const router = createRouter({
     {
       name: 'Home',
       path: '/',
-      component: () => import('@/views/home/HomeView.vue')
+      redirect: '/dashboard',
+      component: () => import('@/views/home/HomeView.vue'),
+      children: [
+        {
+          name: 'Dashboard',
+          path: 'dashboard',
+          component: () => import('@/views/home/pages/HomePage.vue')
+        },
+        {
+          name: 'Category',
+          path: 'category',
+          component: () => import('@/views/home/pages/CategoryPage.vue')
+        },
+        {
+          name: 'Settings',
+          path: 'settings',
+          component: () => import('@/views/home/pages/SettingsPage.vue')
+        },
+        {
+          name: 'About',
+          path: 'about',
+          component: () => import('@/views/home/pages/AboutPage.vue')
+        }
+      ]
     },
     {
       name: 'OOBE',
@@ -23,7 +46,7 @@ router.beforeEach((to, _, next) => {
   if (!isOobeCompleted && to.name !== 'OOBE') {
     next({ name: 'OOBE' })
   } else if (isOobeCompleted && to.name === 'OOBE') {
-    next({ name: 'Home' })
+    next({ name: 'Dashboard' })
   } else {
     next()
   }

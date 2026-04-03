@@ -24,5 +24,14 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+:host, html {
+  scrollbar-gutter: stable;
+  height: 100%;
+}
 
+body {
+  margin: 0;
+  height: 100%;
+  overflow-x: hidden; 
+}
 </style>
