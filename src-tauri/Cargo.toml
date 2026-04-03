@@ -1,8 +1,8 @@
 [package]
 name = "favordex"
 version = "0.1.0"
-description = "A Tauri App"
-authors = ["you"]
+description = "Favordex is an open-source desktop application designed to solve the chaos of unorganized browser bookmarks. By leveraging AI (OpenAI/Ollama/Google), it automatically categorizes and cleans your bookmark library."
+authors = ["Gabriel Bao <chinabga@gmail.com>"]
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
