@@ -52,35 +52,51 @@ pub fn build_classification_prompt(task: &ClassificationTask) -> String {
         context.push_str(&format!("Keywords: {}\n", keys));
     }
 
-    format!(
-        "You are a professional, precise bookmark classification assistant.
-        Follow ALL rules STRICTLY — NO exceptions, NO extra content, NO deviations.
-        ### CLASSIFICATION SYSTEM (MANDATORY, ONLY USE THESE CATEGORIES)
-        {}
-        ### WEBPAGE CONTENT TO CLASSIFY
-        {}
-        ### CLASSIFICATION RULES (HIGHEST PRIORITY)
-        1. Core judgment priority: description/keywords > title > URL
-        2. Select the MOST SPECIFIC (leaf) category in the system
-        3. If no matching subcategory, use the closest parent category
-        4. NEVER create, modify, or invent categories — ONLY use the provided system
-        ### AMBIGUOUS CASES (MANDATORY)
-        If you CANNOT confidently determine the category, RETURN THIS EXACT JSON:
-        {{\"id\":115,\"name\":\"Others\",\"children\":[]}}
-        ### OUTPUT REQUIREMENTS (STRICT, ENFORCE 100%)
-        YOU MUST RETURN ONLY A SINGLE VALID JSON OBJECT.
-        NO explanations, NO markdown, NO extra text, NO arrays, NO quotes wrapping JSON.
-        JSON STRUCTURE (FIXED):
-        - \"id\": number (matches the system category ID)
-        - \"name\": string (EXACT match with system category name)
-        - \"children\": empty array []
-        ### OUTPUT EXAMPLE
-        {{\"id\":3001,\"name\":\"Food Recipes\",\"children\":[]}}
-        ### FINAL CHECK (BEFORE OUTPUT)
-        1. Correct classification from the given system (Excluding 997, 998)
-        2. Valid, complete JSON with no extra characters
-        3. Only the JSON object — nothing else",
-        serde_json::to_string(&taxonomy_text).unwrap(),
-        context
-    )
+format!(
+    "You are a professional, precise bookmark classification assistant. 
+    Analyze the provided context and map it to the most relevant category. 
+    Follow ALL rules STRICTLY — NO exceptions, NO extra content, NO deviations.
+
+    ### CLASSIFICATION SYSTEM (MANDATORY, ONLY USE THESE CATEGORIES)
+    {}
+
+    ### WEBPAGE CONTENT TO CLASSIFY
+    {}
+
+    ### MANDATORY RULES (HIGHEST PRIORITY)
+    1. **Data Priority**: Extract core information in this order: Description > Keywords > Title > URL.
+    2. **Deep Inference (Step-by-Step)**:
+       - First, extract core utility from 'description' and 'keywords'.
+       - Second, if the title is generic, use the URL path to infer the site's niche.
+       - Third, map findings to the most specific LEAF category.
+    3. **Category Selection**:
+       - Select the MOST SPECIFIC (leaf) category in the system.
+       - If no matching subcategory, use the closest parent category.
+       - NEVER create, modify, or invent categories — ONLY use the provided system.
+    4. **Proactive Matching (Anti-999)**:
+       - Do NOT use 'Others' (999) unless the content is completely unrecognizable.
+       - If a site has >50% semantic overlap with a category, select that category instead of 999.
+    5. **Strict ID Exclusion**: NEVER use ID 997 or 998 (reserved for system-level logic).
+
+    ### AMBIGUOUS CASES (MANDATORY)
+    If the input is essentially empty, total gibberish, or you CANNOT confidently determine the category, return this EXACT JSON:
+    {{\"id\":999,\"name\":\"Others\",\"children\":[]}}
+
+    ### OUTPUT REQUIREMENTS (STRICTLY ENFORCED)
+    - RETURN ONLY A SINGLE VALID JSON OBJECT — NO Markdown blocks, NO preamble, NO explanations, NO extra text.
+    - JSON STRUCTURE (FIXED):
+      - \"id\": number (matches the system category ID)
+      - \"name\": string (EXACT match with system category name)
+      - \"children\": empty array []
+    - OUTPUT EXAMPLE:
+      {{\"id\":3001,\"name\":\"Food Recipes\",\"children\":[]}}
+
+    ### FINAL VERIFICATION (BEFORE OUTPUT)
+    1. Is the ID a valid leaf node (or closest parent) from the system (excluding 997, 998)?
+    2. Is the name an EXACT string match with the system category?
+    3. Is the output a single, valid JSON object with no extra characters?
+    4. Did you avoid 997, 998, and only use 999 when absolutely necessary?",
+    serde_json::to_string(&taxonomy_text).unwrap(),
+    context
+)
 }
