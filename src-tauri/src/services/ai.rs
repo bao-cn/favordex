@@ -1,4 +1,4 @@
-use crate::ai_supplier::{google::call_google, ollama::call_ollama, open_ai::call_openai};
+use crate::ai_supplier::{google::call_google, ollama::call_ollama, open_ai::call_openai, custom::call_custom};
 use crate::models::{BookmarkFolder, ClassificationTask, ClassifyOptions};
 use reqwest::Client;
 
@@ -31,6 +31,14 @@ pub async fn get_category(
         }
         "openai" => call_openai(&client, &prompt, options).await,
         "google" => call_google(&client, &prompt, options).await,
+        "custom" => {
+            let provider_url = options
+                .provider_url
+                .as_deref()
+                .unwrap_or("http://localhost:11434");
+
+            call_custom(&client, &prompt, options, provider_url).await
+        }
         _ => Err("未知的 AI 供应商".to_string()),
     }
 }

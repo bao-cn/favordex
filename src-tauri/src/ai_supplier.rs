@@ -1,6 +1,7 @@
 pub mod google;
 pub mod ollama;
 pub mod open_ai;
+pub mod custom;
 
 use crate::models::{BookmarkFolder, ClassifyOptions};
 use google::GeminiModelList;
@@ -14,6 +15,7 @@ pub enum AiProvider {
     Ollama,
     Openai,
     Google,
+    Custom,
 }
 
 impl FromStr for AiProvider {
@@ -24,6 +26,7 @@ impl FromStr for AiProvider {
             "openai" => Ok(AiProvider::Openai),
             "ollama" => Ok(AiProvider::Ollama),
             "google" => Ok(AiProvider::Google),
+            "custom" => Ok(AiProvider::Custom),
             _ => Err(format!("不支持的 provider: {}", s)),
         }
     }
@@ -117,11 +120,7 @@ pub async fn get_models(
             let model_names: Vec<String> = res
                 .models
                 .into_iter()
-                .filter(|m| {
-                    m.methods
-                        .iter()
-                        .any(|s| s == "generateContent")
-                })
+                .filter(|m| m.methods.iter().any(|s| s == "generateContent"))
                 .map(|m| {
                     m.name
                         .strip_prefix("models/")
@@ -136,6 +135,35 @@ pub async fn get_models(
             }
 
             Ok(model_names)
+        }
+        AiProvider::Custom => {
+            // Custom provider logic, Compatible with OpenAI's API format
+            let key = api_key.ok_or("Custom API Key 未设置")?;
+
+            let url = format!("{}/models", api_url.trim_end_matches("/"));
+
+            let res: OpenAIResponse = client
+                .get(&url)
+                .bearer_auth(key)
+                .send()
+                .await
+                .map_err(|e| format!("请求 Custom Provider 失败: {}", e))?
+                .json()
+                .await
+                .map_err(|e| format!("解析 Custom Provider 响应失败: {}", e))?;
+
+            let models = res
+                .data
+                .unwrap_or_default()
+                .into_iter()
+                .filter_map(|m| m.id)
+                .collect::<Vec<String>>();
+
+            if models.is_empty() {
+                return Err("未获取到任何模型（请确认接口是否兼容 OpenAI /v1/models）".to_string());
+            }
+
+            Ok(models)
         }
     }
 }
@@ -173,16 +201,16 @@ fn parse_to_folder(json_str: &str, options: &ClassifyOptions) -> BookmarkFolder 
         Ok(parsed) if parsed.id > 0 => {
             println!("成功解析: {:?}", parsed.name);
             parsed
-        },
+        }
         Err(e) => {
             println!("Serde 解析失败: {}", e);
             println!("失败的字符串原文: {:?}", json_str);
-            
+
             get_fallback_folder(
                 options.fallback_id.unwrap_or(FALLBACK_ID),
                 options.fallback_name.as_deref().unwrap_or(FALLBACK_NAME),
             )
-        },
+        }
         _ => get_fallback_folder(FALLBACK_ID, FALLBACK_NAME),
     }
 }
@@ -197,7 +225,10 @@ fn clean_json_content(raw: &str) -> String {
 
     s = s.strip_prefix('\u{FEFF}').unwrap_or(s);
 
-    if let Some(content) = s.strip_prefix("```json").or_else(|| s.strip_prefix("```JSON")) {
+    if let Some(content) = s
+        .strip_prefix("```json")
+        .or_else(|| s.strip_prefix("```JSON"))
+    {
         s = content;
     } else if let Some(content) = s.strip_prefix("```") {
         s = content;
